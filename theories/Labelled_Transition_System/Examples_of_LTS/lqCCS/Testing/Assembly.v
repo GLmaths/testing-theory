@@ -28,14 +28,14 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Assembly.
+  Context `{lqP : lqCCS_Parameters}.
 
 Lemma co_succ_offer X a a' : offer_of a = offer_of a' → co_succ X a = [] → co_succ X a' = [].
 Proof.
@@ -50,41 +50,41 @@ Proof.
   - rewrite !gco_heads. by apply omap_nil_offer.
 Qed.
 
-Lemma menu_step T m a : menu T m (offer_of a) → tnodes T (m ++ [a]) ≠ [].
+Lemma menu_step T z' a : menu T z' (offer_of a) → tnodes T (z' ++ [a]) ≠ [].
 Proof.
   intros (T' & a' & HT' & Eo & Hne). destruct (co_succ T' a) as [|T'' l] eqn:E.
   - exfalso. apply Hne. by apply (co_succ_offer T' a a').
-  - intros Enil. assert (Hin : T'' ∈ tnodes T (m ++ [a])).
+  - intros Enil. assert (Hin : T'' ∈ tnodes T (z' ++ [a])).
     { apply tnodes_app_elem. exists T'. split; [done|]. rewrite E. by left. }
     rewrite Enil in Hin. by apply elem_of_nil in Hin.
 Qed.
 
-Lemma step_menu T m a : tnodes T (m ++ [a]) ≠ [] → menu T m (offer_of a).
+Lemma step_menu T z' a : tnodes T (z' ++ [a]) ≠ [] → menu T z' (offer_of a).
 Proof.
-  intros Hne. destruct (tnodes T (m ++ [a])) as [|T'' l] eqn:E; [done|].
-  assert (Hin : T'' ∈ tnodes T (m ++ [a])) by (rewrite E; by left).
+  intros Hne. destruct (tnodes T (z' ++ [a])) as [|T'' l] eqn:E; [done|].
+  assert (Hin : T'' ∈ tnodes T (z' ++ [a])) by (rewrite E; by left).
   apply tnodes_app_elem in Hin as (T' & HT' & Hin). exists T', a. split; [done|]. split; [done|].
   intros En. rewrite En in Hin. by apply elem_of_nil in Hin.
 Qed.
 
-Lemma plain_app_l (m l : node) : plain (m ++ l) → plain m.
-Proof. intros Hp k c v Hin. apply (Hp k c v). apply elem_of_app. by left. Qed.
+Lemma plain_app_l (z' l : node) : plain (z' ++ l) → plain z'.
+Proof. intros Hp t c v Hin. apply (Hp t c v). apply elem_of_app. by left. Qed.
 
-Lemma nout_plain (n : list coact) : plain n → nout n = n.
+Lemma nout_plain (z : list coact) : plain z → nout z = z.
 Proof.
-  induction n as [|a n IH]; intros Hp; [done|].
+  induction z as [|a z IH]; intros Hp; [done|].
   assert (Ha : isout a = false).
-  { destruct a; try done. exfalso. apply (Hp k c v). by left. }
+  { destruct a; try done. exfalso. apply (Hp t c v). by left. }
   unfold nout in *. rewrite list.filter_cons_True by exact Ha. f_equal. apply IH.
-  intros k c v Hin. apply (Hp k c v). by right.
+  intros t c v Hin. apply (Hp t c v). by right.
 Qed.
 
-Lemma S_T_app T n l : S_T T n = true → S_T T (n ++ l) = true.
+Lemma S_T_app T z l : S_T T z = true → S_T T (z ++ l) = true.
 Proof.
   intros Hs. induction l as [|a l IH] using rev_ind; [by rewrite app_nil_r|]. rewrite app_assoc. by apply S_T_ext.
 Qed.
 
-Lemma succ_prefix T m l : succ_at T m = true → S_T T (m ++ l) = true.
+Lemma succ_prefix T z' l : succ_at T z' = true → S_T T (z' ++ l) = true.
 Proof. intros Hs. apply S_T_app. by apply succ_at_S. Qed.
 
 Definition relevant (c : comp) (o : offer) : Prop :=
@@ -98,11 +98,11 @@ Lemma cstep_menu_eq `{QM : QuantumModel} I J O ρ c σ Δ :
   (∀ o, relevant c o → I c.1 o → J c.1 o) → cstep I O ρ c σ Δ → cstep J O ρ c σ Δ.
 Proof.
   intros Hrel Hs.
-  apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                  |n P C k U' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
+  apply cstep_cases in Hs. inversion Hs as [z P C k Δ0 Hss|z P C t d v t' P' Hin HkC Hp|z P C t d v t' P' HI Hp
+                  |z P C t U' qs t' HI|z P C t q t' HI|z P C t M qs t' HI|z P C t t' HI]; subst; simpl in *.
   - by constructor.
   - by apply cs_recv.
-  - apply cs_in; [|done]. apply Hrel; [|done]. by exists t, v, P'.
+  - apply cs_in; [|done]. apply Hrel; [|done]. by exists t', v, P'.
   - apply cs_op. by apply Hrel.
   - apply cs_init. by apply Hrel.
   - apply cs_meas. by apply Hrel.
@@ -110,7 +110,7 @@ Proof.
 Qed.
 
 Section Asm.
-  Context `{QM : QuantumModel} (p q : proc * St) (T : proc) (Ch : channel → Prop) (K : tag → okind).
+  Context `{QM : QuantumModel} (p q : prog * St) (T : prog) (Ch : channel → Prop) (K : tag → okind).
   Context (O : node → list msg) (r : nat → dist comp) (w : nat → item) (F : list tag) (Mo : option meas).
   Context (VL : list val) (reps : node → list offer) (wrapb : node → offer → bool) (f0 : nat).
   Context (LV : node → Prop) (CL : channel → Prop) (N : nat).
@@ -128,87 +128,87 @@ Section Asm.
 
   Hypothesis HT : obs_for p q T.
   Hypothesis Hrun : run_word (M := lq_menu O) (menu T) Sx (dinit q) r w.
-  Hypothesis Hnz : ∀ i x, x ∈ r i → x.2 ≠ weight_zero.
-  Hypothesis HokT : ∀ n o, menu T n o → Ok o.
-  Hypothesis HO : ∀ n m, plain n → Sx n = false → (m ∈ O n ↔ m ∈ O_T T n).
+  Hypothesis Hnz : ∀ n x, x ∈ r n → x.2 ≠ weight_zero.
+  Hypothesis HokT : ∀ z o, menu T z o → Ok o.
+  Hypothesis HO : ∀ z m, plain z → Sx z = false → (m ∈ O z ↔ m ∈ O_T T z).
   Hypothesis HCh : ∀ c, c ∈ out_chans T → Ch c.
-  Hypothesis HK : ∀ k x, (k, x) ∈ tagged T → K k = x.
-  Hypothesis Hnd : ∀ m, NoDup (reps m).
-  Hypothesis HR2 : ∀ m o, o ∈ reps m → J0 m o ∧ ¬ menu T m o.
-  Hypothesis HR3 : ∀ m o, LV (m) → J0 m o → ¬ menu T m o → (∀ k c, o = OffIn k c → CL c) → o ∈ reps m.
-  Hypothesis HW1 : ∀ m o, wrapb m o = true → ¬ U m o.
-  Hypothesis HW2 : ∀ m o, LV (m) → menu T m o → ¬ U m o → wrapb m o = true.
-  Hypothesis HLVp : ∀ n m, LV (n ++ m) → LV (n).
-  Hypothesis HVL : ∀ n a, LV (n) → a ∈ n → ¬ unlisted VL a.
-  Hypothesis Hf0 : ∀ n, LV (n) → length n < f0.
-  Hypothesis HKr : ∀ k, K k ≠ KRec.
+  Hypothesis HK : ∀ t x, (t, x) ∈ tagged T → K t = x.
+  Hypothesis Hnd : ∀ z', NoDup (reps z').
+  Hypothesis HR2 : ∀ z' o, o ∈ reps z' → J0 z' o ∧ ¬ menu T z' o.
+  Hypothesis HR3 : ∀ z' o, LV (z') → J0 z' o → ¬ menu T z' o → (∀ t c, o = OffIn t c → CL c) → o ∈ reps z'.
+  Hypothesis HW1 : ∀ z' o, wrapb z' o = true → ¬ U z' o.
+  Hypothesis HW2 : ∀ z' o, LV (z') → menu T z' o → ¬ U z' o → wrapb z' o = true.
+  Hypothesis HLVp : ∀ z z', LV (z ++ z') → LV (z).
+  Hypothesis HVL : ∀ z a, LV (z) → a ∈ z → ¬ unlisted VL a.
+  Hypothesis Hf0 : ∀ z, LV (z) → length z < f0.
+  Hypothesis HKr : ∀ t, K t ≠ KRec.
 
-  Lemma T_len n : length (tnodes T n) ≤ 1.
-  Proof. exact (proj1 (proj2 (proj2 (proj1 HT))) n). Qed.
+  Lemma T_len z : length (tnodes T z) ≤ 1.
+  Proof. exact (proj1 (proj2 (proj2 (proj1 HT))) z). Qed.
 
-  Lemma rep_ok m o : o ∈ reps m → Ok o.
+  Lemma rep_ok z' o : o ∈ reps z' → Ok o.
   Proof.
-    intros Hin. destruct (HR2 m o Hin) as [HJ HnM]. destruct HJ as [HM|[HJ _]]; [done|].
-    destruct HJ as [HU|[Hok _]]; [|done]. destruct HnM. exact (U_menu q T O r w Hrun m o HU).
+    intros Hin. destruct (HR2 z' o Hin) as [HJ HnM]. destruct HJ as [HM|[HJ _]]; [done|].
+    destruct HJ as [HU|[Hok _]]; [|done]. destruct HnM. exact (U_menu q T O r w Hrun z' o HU).
   Qed.
 
-  Lemma reps_nounf m k : OffUnfold k ∉ reps m.
-  Proof. intros Hin. destruct (rep_ok m _ Hin) as (Hty & _). unfold typed in Hty. simpl in Hty. apply (HKr k). congruence. Qed.
+  Lemma reps_nounf z' t : OffUnfold t ∉ reps z'.
+  Proof. intros Hin. destruct (rep_ok z' _ Hin) as (Hty & _). unfold typed in Hty. simpl in Hty. apply (HKr t). congruence. Qed.
 
   Lemma T_ob : obsb T = true.
   Proof. exact (proj1 (proj1 (proj1 HT))). Qed.
 
-  Definition TG (x : tag * okind) : Prop := x ∈ tagged T ∨ ∃ m o, o ∈ reps m ∧ x = (off_tag o, off_kind o).
+  Definition TG (x : tag * okind) : Prop := x ∈ tagged T ∨ ∃ z' o, o ∈ reps z' ∧ x = (off_tag o, off_kind o).
   Definition OC (c : channel) : Prop := c ∈ out_chans T.
-  Definition IC (c : channel) : Prop := c ∈ in_chans T ∨ ∃ m k, OffIn k c ∈ reps m.
+  Definition IC (c : channel) : Prop := c ∈ in_chans T ∨ ∃ z' t, OffIn t c ∈ reps z'.
 
   Lemma TN_syn : syn TG OC IC TN.
   Proof.
     apply tn_syn.
-    - intros m o Hin. split; [right; by exists m, o|]. intros k c ->. right. by exists m, k.
+    - intros z' o Hin. split; [right; by exists z', o|]. intros t c ->. right. by exists z', t.
     - split; [exact (proj1 (proj1 (proj1 HT)))|]. split; [intros x Hx; by left|].
       split; [intros c Hc; exact Hc|intros c Hc; by left].
   Qed.
 
-  Lemma TG_kind k x : TG (k, x) → K k = x.
+  Lemma TG_kind t x : TG (t, x) → K t = x.
   Proof.
-    intros [Hin|(m & o & Hin & E)]; [exact (HK k x Hin)|]. injection E as -> ->.
-    destruct (rep_ok m o Hin) as (Hty & _). symmetry. exact Hty.
+    intros [Hin|(z' & o & Hin & E)]; [exact (HK t x Hin)|]. injection E as -> ->.
+    destruct (rep_ok z' o Hin) as (Hty & _). symmetry. exact Hty.
   Qed.
 
-  Lemma TG_tag k x : TG (k, x) → k ∉ otags p.1 ∧ k ∉ otags q.1.
+  Lemma TG_tag t x : TG (t, x) → t ∉ otags p.1 ∧ t ∉ otags q.1.
   Proof.
-    intros [Hin|(m & o & Hin & E)].
-    - apply (proj2 HT). unfold tags. apply list_elem_of_fmap. by exists (k, x).
-    - injection E as -> ->. destruct (rep_ok m o Hin) as (_ & Hp & Hq & _). done.
+    intros [Hin|(z' & o & Hin & E)].
+    - apply (proj2 HT). unfold tags. apply list_elem_of_fmap. by exists (t, x).
+    - injection E as -> ->. destruct (rep_ok z' o Hin) as (_ & Hp & Hq & _). done.
   Qed.
 
   Lemma TN_observer : observer TN.
   Proof.
     destruct TN_syn as (Hob & Htg & Hoc & Hic). destruct HT as [(Hobs & Hk2 & Hk3 & Hk4) Htags].
     split; [split; [done|]|split; [|split]].
-    - intros c Hc Hc'. destruct (Hic c Hc') as [Hin|(m & k & Hin)].
+    - intros c Hc Hc'. destruct (Hic c Hc') as [Hin|(z' & t & Hin)].
       + exact (proj2 Hobs c (Hoc c Hc) Hin).
-      + destruct (rep_ok m _ Hin) as (_ & _ & _ & Hch). exact (Hch k c eq_refl (HCh c (Hoc c Hc))).
-    - intros k x y Hx Hy. rewrite <- (TG_kind k x (Htg _ Hx)). exact (TG_kind k y (Htg _ Hy)).
+      + destruct (rep_ok z' _ Hin) as (_ & _ & _ & Hch). exact (Hch t c eq_refl (HCh c (Hoc c Hc))).
+    - intros t x y Hx Hy. rewrite <- (TG_kind t x (Htg _ Hx)). exact (TG_kind t y (Htg _ Hy)).
     - exact (tn_len VL reps wrapb Hnd reps_nounf T f0 T_len T_ob).
-    - intros n m k c v c' v' Y HY. exact (tn_gone VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n m k c v c' v' Y Hk4 HY).
+    - intros z z' t c v c' v' Y HY. exact (tn_gone VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z z' t c v c' v' Y Hk4 HY).
   Qed.
 
   Lemma TN_real : RealT p q O Ch K (menu TN) (S_T TN).
   Proof.
     split.
     - exists TN. split; [split; [exact TN_observer|]|].
-      + intros t Ht. unfold tags in Ht. apply list_elem_of_fmap in Ht as ([k x] & -> & Hin).
-        exact (TG_tag k x (proj1 (proj2 TN_syn) _ Hin)).
+      + intros t' Ht. unfold tags in Ht. apply list_elem_of_fmap in Ht as ([t x] & -> & Hin).
+        exact (TG_tag t x (proj1 (proj2 TN_syn) _ Hin)).
       + split; [|split; [done|split; [done|split]]].
-        * intros n [[k c] v] Hpl HS. assert (HST : Sx n = false).
-          { destruct (Sx n) eqn:E; [|done]. rewrite (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n E) in HS. discriminate HS. }
-          rewrite (HO n _ Hpl HST). symmetry. exact (tn_O VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n k c v HS).
+        * intros z [[t c] v] Hpl HS. assert (HST : Sx z = false).
+          { destruct (Sx z) eqn:E; [|done]. rewrite (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z E) in HS. discriminate HS. }
+          rewrite (HO z _ Hpl HST). symmetry. exact (tn_O VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z t c v HS).
         * intros c Hc. apply HCh. exact (proj1 (proj2 (proj2 TN_syn)) c Hc).
-        * intros k x Hin. exact (TG_kind k x (proj1 (proj2 TN_syn) _ Hin)).
-    - intros n o Hm. destruct (tn_menu_any VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n o Hm) as [HM|[Hin|(n0 & HM)]].
-      + exact (HokT n o HM).
+        * intros t x Hin. exact (TG_kind t x (proj1 (proj2 TN_syn) _ Hin)).
+    - intros z o Hm. destruct (tn_menu_any VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z o Hm) as [HM|[Hin|(n0 & HM)]].
+      + exact (HokT z o HM).
       + exact (rep_ok _ o Hin).
       + exact (HokT n0 o HM).
   Qed.
@@ -225,116 +225,116 @@ Section Asm.
   Lemma HiU : ∀ x, x ∈ r 0 → visited_ok (M := lq_menu O) U (mnode (MenuSts := lq_menu O) x.1).
   Proof. rewrite (proj1 Hrun). apply init_visited. intros x ->%list_elem_of_singleton. done. Qed.
 
-  Lemma q_vis i x : x ∈ r i → visited_ok (M := lq_menu O) U x.1.1.
-  Proof. exact (visited_run (M := lq_menu O) U Sx r w HrU HiU i x). Qed.
+  Lemma q_vis n x : x ∈ r n → visited_ok (M := lq_menu O) U x.1.1.
+  Proof. exact (visited_run (M := lq_menu O) U Sx r w HrU HiU n x). Qed.
 
-  Lemma q_plain i x : x ∈ r i → plain x.1.1.
+  Lemma q_plain n x : x ∈ r n → plain x.1.1.
   Proof.
     apply (run_inv (mdlts (M := lq_menu O) (menu T) Sx) (λ c, plain c.1)) with (D := dinit q).
     - intros ρ c σ Δ Hp Hs y Hy. exact (cstep_plain _ _ _ _ _ _ Hs Hp y Hy).
     - exact (run_word_is_run (M := lq_menu O) _ _ _ r w Hrun).
-    - intros y ->%list_elem_of_singleton. intros k c v Hin. by apply elem_of_nil in Hin.
+    - intros y ->%list_elem_of_singleton. intros t c v Hin. by apply elem_of_nil in Hin.
   Qed.
 
-  Lemma clean_node n : plain n → visited_ok (M := lq_menu O) U n → ¬ wpath wrapb T n ∧ ¬ rpath reps n.
+  Lemma clean_node z : plain z → visited_ok (M := lq_menu O) U z → ¬ wpath wrapb T z ∧ ¬ rpath reps z.
   Proof.
     intros Hpl Hv. split.
-    - intros (m & a & m2 & E & Ha & Hw & _). subst n. rewrite nout_plain in Hw by (exact (plain_app_l _ _ Hpl)).
-      apply (HW1 m _ Hw). exact (Hv m a m2 eq_refl).
-    - intros (m & a & m2 & E & Ha & Hin). subst n. rewrite nout_plain in Hin by (exact (plain_app_l _ _ Hpl)).
-      destruct (HR2 m _ Hin) as [_ HnM]. apply HnM. apply (U_menu q T O r w Hrun). exact (Hv m a m2 eq_refl).
+    - intros (z' & a & z2 & E & Ha & Hw & _). subst z. rewrite nout_plain in Hw by (exact (plain_app_l _ _ Hpl)).
+      apply (HW1 z' _ Hw). exact (Hv z' a z2 eq_refl).
+    - intros (z' & a & z2 & E & Ha & Hin). subst z. rewrite nout_plain in Hin by (exact (plain_app_l _ _ Hpl)).
+      destruct (HR2 z' _ Hin) as [_ HnM]. apply HnM. apply (U_menu q T O r w Hrun). exact (Hv z' a z2 eq_refl).
   Qed.
 
-  Lemma clean_S n : ¬ wpath wrapb T n → ¬ rpath reps n → S_T TN n = Sx n.
+  Lemma clean_S z : ¬ wpath wrapb T z → ¬ rpath reps z → S_T TN z = Sx z.
   Proof.
     intros Hw Hr. apply eq_true_iff_eq. split.
-    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n HS) as [Hc|[Hc|Hc]]; done.
-    - exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n).
+    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z HS) as [Hc|[Hc|Hc]]; done.
+    - exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z).
   Qed.
 
-  Lemma q_S i c ρ : (c, ρ) ∈ r i → S_T TN c.1 = Sx c.1.
+  Lemma q_S n c ρ : (c, ρ) ∈ r n → S_T TN c.1 = Sx c.1.
   Proof.
-    intros Hin. destruct (clean_node c.1 (q_plain i (c, ρ) Hin) (q_vis i (c, ρ) Hin)) as [Hw Hr]. by apply clean_S.
+    intros Hin. destruct (clean_node c.1 (q_plain n (c, ρ) Hin) (q_vis n (c, ρ) Hin)) as [Hw Hr]. by apply clean_S.
   Qed.
 
   Lemma q_run : is_run (SchedSts0 := STN) Stay (dinit q) r.
   Proof.
     apply (run_word_is_run (M := lq_menu O) _ _ _ r w). split; [exact (proj1 Hrun)|].
     refine (proj2 (run_sandwich (M := lq_menu O) Ok U Sx r w HrU (menu TN) (S_T TN) _ _ _)).
-    - intros i c ρ Hin. exact (q_S i c ρ Hin).
-    - intros i c ρ o Hin HS HU. assert (HSN : S_T TN c.1 = false) by (rewrite (q_S i c ρ Hin); exact HS).
+    - intros n c ρ Hin. exact (q_S n c ρ Hin).
+    - intros n c ρ o Hin HS HU. assert (HSN : S_T TN c.1 = false) by (rewrite (q_S n c ρ Hin); exact HS).
       apply (proj1 (tn_menu_low VL reps wrapb Hnd reps_nounf T f0 T_len T_ob c.1 o HSN)). exact (U_menu q T O r w Hrun _ o HU).
-    - intros i c ρ o Hin HS Hm. assert (HSN : S_T TN c.1 = false) by (rewrite (q_S i c ρ Hin); exact HS).
+    - intros n c ρ o Hin HS Hm. assert (HSN : S_T TN c.1 = false) by (rewrite (q_S n c ρ Hin); exact HS).
       destruct (proj2 (tn_menu_low VL reps wrapb Hnd reps_nounf T f0 T_len T_ob c.1 o HSN) Hm) as [HM|Hin'].
       + exact (menu_star p q T Ch K O r w Hrun Hnz HokT _ o HM).
-      + rewrite nout_plain in Hin' by (exact (q_plain i (c, ρ) Hin)).
+      + rewrite nout_plain in Hin' by (exact (q_plain n (c, ρ) Hin)).
         exact (J0_sub p q T Ch K O r w F Mo Hrun Hnz HokT _ o (proj1 (HR2 _ o Hin'))).
   Qed.
 
-  Lemma q_Sstar i c ρ : (c, ρ) ∈ r i → S_T TN c.1 = Ss c.1.
+  Lemma q_Sstar n c ρ : (c, ρ) ∈ r n → S_T TN c.1 = Ss c.1.
   Proof.
-    intros Hin. rewrite (q_S i c ρ Hin). symmetry.
-    exact (Sstar_visited (M := lq_menu O) Ok U Sx r w HrU HiU i c ρ Hin).
+    intros Hin. rewrite (q_S n c ρ Hin). symmetry.
+    exact (Sstar_visited (M := lq_menu O) Ok U Sx r w HrU HiU n c ρ Hin).
   Qed.
 
-  Lemma np_cause n : LV (n) → plain n → Sx n = false → ¬ pcause VL T f0 n.
+  Lemma np_cause z : LV (z) → plain z → Sx z = false → ¬ pcause VL T f0 z.
   Proof.
     intros Hin Hpl HS [Hf|[Hs|(a & Ha & Hu)]].
-    - rewrite nout_plain in Hf by done. pose proof (Hf0 n Hin). lia.
+    - rewrite nout_plain in Hf by done. pose proof (Hf0 z Hin). lia.
     - congruence.
-    - exact (HVL n a Hin Ha Hu).
+    - exact (HVL z a Hin Ha Hu).
   Qed.
 
-  Lemma p_succ n : LV (n) → plain n → visited_ok (M := lq_menu O) (menu TN) n → (S_T TN n = true ↔ Ss n = true).
+  Lemma p_succ z : LV (z) → plain z → visited_ok (M := lq_menu O) (menu TN) z → (S_T TN z = true ↔ Ss z = true).
   Proof.
     intros Hin Hpl Hv. split.
-    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n HS)
-        as [Hc|[(m & a & m2 & E & Ha & Hw & HTne)|(m & a & m2 & E & Ha & Hr)]].
+    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z HS)
+        as [Hc|[(z' & a & z2 & E & Ha & Hw & HTne)|(z' & a & z2 & E & Ha & Hr)]].
       + by apply Sstar_S.
-      + apply Sstar_crossed. subst n. exists m, a, m2. split; [done|].
+      + apply Sstar_crossed. subst z. exists z', a, z2. split; [done|].
         rewrite nout_plain in Hw by (exact (plain_app_l _ _ Hpl)). split.
         * apply (menu_star p q T Ch K O r w Hrun Hnz HokT). by apply step_menu.
-        * exact (HW1 m _ Hw).
-      + apply Sstar_crossed. subst n. exists m, a, m2. split; [done|].
-        rewrite nout_plain in Hr by (exact (plain_app_l _ _ Hpl)). destruct (HR2 m _ Hr) as [HJ HnM]. split.
-        * exact (J0_sub p q T Ch K O r w F Mo Hrun Hnz HokT m _ HJ).
-        * intros HU. apply HnM. exact (U_menu q T O r w Hrun m _ HU).
-    - intros HS. apply Sstar_inv in HS as [HS|(m & a & m2 & E & HJ & HnU)];
-        [exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n HS)|].
-      destruct (Sx n) eqn:EST; [exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n EST)|].
-      assert (E' : n = (m ++ [a]) ++ m2) by (rewrite E; by rewrite <- app_assoc).
-      assert (HinP : LV (m ++ [a])) by (apply (HLVp _ m2); by rewrite <- E').
-      assert (HplP : plain (m ++ [a])) by (apply (plain_app_l _ m2); by rewrite <- E').
-      assert (HSP : Sx (m ++ [a]) = false).
-      { destruct (Sx (m ++ [a])) eqn:E2; [|done]. pose proof (S_T_app T _ m2 E2) as Hx. rewrite <- E' in Hx. congruence. }
-      assert (Ha : ∀ k c v, a ≠ CoOut k c v).
-      { intros k c v ->. apply (HplP k c v). apply elem_of_app. right. by left. }
-      assert (HneN : tnodes TN (m ++ [a]) ≠ []) by (apply menu_step; exact (Hv m a m2 E)).
-      rewrite E'. destruct (tnodes T (m ++ [a])) as [|X lx] eqn:ET.
-      + exact (succ_prefix TN _ m2 (tn_rep_succ VL reps wrapb Hnd reps_nounf T f0 T_len T_ob (m ++ [a]) ET HneN)).
-      + apply succ_prefix. apply (tn_wrap_succ VL reps wrapb Hnd reps_nounf T f0 T_len T_ob m a Ha);
+        * exact (HW1 z' _ Hw).
+      + apply Sstar_crossed. subst z. exists z', a, z2. split; [done|].
+        rewrite nout_plain in Hr by (exact (plain_app_l _ _ Hpl)). destruct (HR2 z' _ Hr) as [HJ HnM]. split.
+        * exact (J0_sub p q T Ch K O r w F Mo Hrun Hnz HokT z' _ HJ).
+        * intros HU. apply HnM. exact (U_menu q T O r w Hrun z' _ HU).
+    - intros HS. apply Sstar_inv in HS as [HS|(z' & a & z2 & E & HJ & HnU)];
+        [exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z HS)|].
+      destruct (Sx z) eqn:EST; [exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z EST)|].
+      assert (E' : z = (z' ++ [a]) ++ z2) by (rewrite E; by rewrite <- app_assoc).
+      assert (HinP : LV (z' ++ [a])) by (apply (HLVp _ z2); by rewrite <- E').
+      assert (HplP : plain (z' ++ [a])) by (apply (plain_app_l _ z2); by rewrite <- E').
+      assert (HSP : Sx (z' ++ [a]) = false).
+      { destruct (Sx (z' ++ [a])) eqn:E2; [|done]. pose proof (S_T_app T _ z2 E2) as Hx. rewrite <- E' in Hx. congruence. }
+      assert (Ha : ∀ t c v, a ≠ CoOut t c v).
+      { intros t c v ->. apply (HplP t c v). apply elem_of_app. right. by left. }
+      assert (HneN : tnodes TN (z' ++ [a]) ≠ []) by (apply menu_step; exact (Hv z' a z2 E)).
+      rewrite E'. destruct (tnodes T (z' ++ [a])) as [|X lx] eqn:ET.
+      + exact (succ_prefix TN _ z2 (tn_rep_succ VL reps wrapb Hnd reps_nounf T f0 T_len T_ob (z' ++ [a]) ET HneN)).
+      + apply succ_prefix. apply (tn_wrap_succ VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z' a Ha);
           [|by rewrite ET|done|exact (np_cause _ HinP HplP HSP)].
-        rewrite nout_plain by (exact (plain_app_l _ _ HplP)). apply (HW2 m); [exact (HLVp m [a] HinP)| |exact HnU].
+        rewrite nout_plain by (exact (plain_app_l _ _ HplP)). apply (HW2 z'); [exact (HLVp z' [a] HinP)| |exact HnU].
         apply step_menu. by rewrite ET.
   Qed.
 
-  Lemma p_steps n ρ P C :
-    LV (n) → plain n → visited_ok (M := lq_menu O) (menu TN) n →
-    (∀ t ch v P', P ⟶ₚ{ch ! v}[{[+ t +]}] P' → CL ch) → S_T TN n = false →
-    ∀ σ Δ, cstep (menu TN) O ρ (n, (P, C)) σ Δ ↔ cstep J0 O ρ (n, (P, C)) σ Δ.
+  Lemma p_steps z ρ P C :
+    LV (z) → plain z → visited_ok (M := lq_menu O) (menu TN) z →
+    (∀ t' ch v P', P ⟶ₚ{ch ! v}[{[+ t' +]}] P' → CL ch) → S_T TN z = false →
+    ∀ σ Δ, cstep (menu TN) O ρ (z, (P, C)) σ Δ ↔ cstep J0 O ρ (z, (P, C)) σ Δ.
   Proof.
     intros Hin Hpl Hv HCLc HS σ Δ.
-    assert (HST : Sx n = false).
-    { destruct (Sx n) eqn:E0; [|done]. rewrite (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n E0) in HS. discriminate HS. }
-    assert (Hne : tnodes TN n ≠ []).
-    { clear -Hv. destruct n as [|a m _] using rev_ind; [done|]. apply menu_step. exact (Hv m a [] eq_refl). }
-    assert (Heq : ∀ o, relevant (n, (P, C)) o → (menu TN n o ↔ J0 n o)).
-    { intros o Hrel. rewrite (tn_menu_head VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n o HS (np_cause n Hin Hpl HST) Hne).
+    assert (HST : Sx z = false).
+    { destruct (Sx z) eqn:E0; [|done]. rewrite (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z E0) in HS. discriminate HS. }
+    assert (Hne : tnodes TN z ≠ []).
+    { clear -Hv. destruct z as [|a z' _] using rev_ind; [done|]. apply menu_step. exact (Hv z' a [] eq_refl). }
+    assert (Heq : ∀ o, relevant (z, (P, C)) o → (menu TN z o ↔ J0 z o)).
+    { intros o Hrel. rewrite (tn_menu_head VL reps wrapb Hnd reps_nounf T f0 T_len T_ob z o HS (np_cause z Hin Hpl HST) Hne).
       rewrite nout_plain by done. split.
-      - intros [HM|[Hin' _]]; [by left|exact (proj1 (HR2 n o Hin'))].
-      - intros HJ. destruct (classic (menu T n o)) as [HM|HnM]; [by left|right]. split.
-        + apply HR3; try done. intros k ch ->. destruct Hrel as (t & v & P' & Hp). exact (HCLc t ch v P' Hp).
-        + intros k c v ->. exact Hrel. }
+      - intros [HM|[Hin' _]]; [by left|exact (proj1 (HR2 z o Hin'))].
+      - intros HJ. destruct (classic (menu T z o)) as [HM|HnM]; [by left|right]. split.
+        + apply HR3; try done. intros t ch ->. destruct Hrel as (t' & v & P' & Hp). exact (HCLc t' ch v P' Hp).
+        + intros t c v ->. exact Hrel. }
     split; apply cstep_menu_eq; intros o Hrel; apply (Heq o Hrel).
   Qed.
 
@@ -345,46 +345,46 @@ Section Asm.
   Lemma p_agree (D : dist comp) : (∀ x, x ∈ D → goodc x) → agree_on STN SJ0 D.
   Proof.
     intros HD c ρ Hin. destruct (HD (c, ρ) Hin) as (Hg1 & Hg2 & Hg3 & Hg4). split; [exact (p_succ c.1 Hg1 Hg2 Hg3)|].
-    intros Hns σ Δ. destruct c as [n [P C]]. apply p_steps; try done.
-    destruct (S_T TN n) eqn:E0; [by destruct Hns|done].
+    intros Hns σ Δ. destruct c as [z [P C]]. apply p_steps; try done.
+    destruct (S_T TN z) eqn:E0; [by destruct Hns|done].
   Qed.
 
-  Fixpoint reach (k : nat) (D : dist comp) : Prop :=
-    match k with
+  Fixpoint reach (n : nat) (D : dist comp) : Prop :=
+    match n with
     | 0 => D = dinit p
-    | S k => ∃ D0, reach k D0 ∧ rstep SJ0 D0 D
+    | S n => ∃ D0, reach n D0 ∧ rstep SJ0 D0 D
     end.
 
-  Hypothesis HLV : ∀ k D x, k ≤ N → reach k D → x ∈ D → LV (x.1.1).
-  Hypothesis HCL : ∀ k D x t ch v P', k ≤ N → reach k D → x ∈ D →
+  Hypothesis HLV : ∀ n D x, n ≤ N → reach n D → x ∈ D → LV (x.1.1).
+  Hypothesis HCL : ∀ n D x t ch v P', n ≤ N → reach n D → x ∈ D →
     x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P' → CL ch.
 
   Theorem p_good r0 : is_run (SchedSts0 := STN) Stay (dinit p) r0 →
-    ∀ i, i ≤ N → agree_on STN SJ0 (r0 i).
+    ∀ n, n ≤ N → agree_on STN SJ0 (r0 n).
   Proof.
     intros Hrun0.
-    assert (Hpl : ∀ i x, x ∈ r0 i → plain x.1.1).
+    assert (Hpl : ∀ n x, x ∈ r0 n → plain x.1.1).
     { apply (run_inv STN (λ c, plain c.1)) with (D := dinit p); [|done|].
       - intros ρ c σ Δ Hp Hs y Hy. exact (cstep_plain _ _ _ _ _ _ Hs Hp y Hy).
-      - intros y ->%list_elem_of_singleton. intros k c v Hin. by apply elem_of_nil in Hin. }
-    assert (Hvis : ∀ i x, x ∈ r0 i → visited_ok (M := lq_menu O) (menu TN) x.1.1).
+      - intros y ->%list_elem_of_singleton. intros t c v Hin. by apply elem_of_nil in Hin. }
+    assert (Hvis : ∀ n x, x ∈ r0 n → visited_ok (M := lq_menu O) (menu TN) x.1.1).
     { apply (run_inv STN (λ c, visited_ok (M := lq_menu O) (menu TN) c.1)) with (D := dinit p); [|done|].
       - intros ρ c σ Δ Hv Hs y Hy. exact (visited_step (M := lq_menu O) (menu TN) ρ c σ Δ y Hv Hs Hy).
-      - intros y ->%list_elem_of_singleton. intros m a m2 E. by destruct m. }
-    assert (Hag : ∀ i, i ≤ N → reach i (r0 i) → agree_on STN SJ0 (r0 i)).
-    { intros i Hi Hre. apply p_agree. intros x Hx. split; [exact (HLV i _ x Hi Hre Hx)|].
-      split; [exact (Hpl i x Hx)|]. split; [exact (Hvis i x Hx)|].
-      intros t ch v P' Hp. exact (HCL i _ x t ch v P' Hi Hre Hx Hp). }
-    assert (Hre : ∀ i, i ≤ N → reach i (r0 i)).
-    { induction i as [|i IH]; intros Hi; [exact (proj1 Hrun0)|].
-      assert (Hi' : i ≤ N) by lia. exists (r0 i). split; [exact (IH Hi')|].
-      destruct (proj2 Hrun0 i) as [(σ & Hs)|[Hst E]].
-      - left. exists σ. exact (agree_dstep _ _ Stay _ σ _ (Hag i Hi' (IH Hi')) Hs).
-      - right. split; [exact (agree_dstable _ _ _ (Hag i Hi' (IH Hi')) Hst)|done]. }
-    intros i Hi. exact (Hag i Hi (Hre i Hi)).
+      - intros y ->%list_elem_of_singleton. intros z' a z2 E. by destruct z'. }
+    assert (Hag : ∀ n, n ≤ N → reach n (r0 n) → agree_on STN SJ0 (r0 n)).
+    { intros n Hi Hre. apply p_agree. intros x Hx. split; [exact (HLV n _ x Hi Hre Hx)|].
+      split; [exact (Hpl n x Hx)|]. split; [exact (Hvis n x Hx)|].
+      intros t' ch v P' Hp. exact (HCL n _ x t' ch v P' Hi Hre Hx Hp). }
+    assert (Hre : ∀ n, n ≤ N → reach n (r0 n)).
+    { induction n as [|n IH]; intros Hi; [exact (proj1 Hrun0)|].
+      assert (Hi' : n ≤ N) by lia. exists (r0 n). split; [exact (IH Hi')|].
+      destruct (proj2 Hrun0 n) as [(σ & Hs)|[Hst E]].
+      - left. exists σ. exact (agree_dstep _ _ Stay _ σ _ (Hag n Hi' (IH Hi')) Hs).
+      - right. split; [exact (agree_dstable _ _ _ (Hag n Hi' (IH Hi')) Hst)|done]. }
+    intros n Hi. exact (Hag n Hi (Hre n Hi)).
   Qed.
 End Asm.
 
-End LqP.
+End Assembly.
 
 (* end hide *)

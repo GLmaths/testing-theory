@@ -27,19 +27,16 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
-
 Section Trace.
-  Context `{QM : QuantumModel} (p q : proc * St).
+  Context `{lqP : lqCCS_Parameters} `{QM : QuantumModel} (p q : prog * St).
 
-  Definition visited (r : nat → dist comp) (n : node) : Prop := ∃ i c ρ, (c, ρ) ∈ r i ∧ c.1 = n.
+  Definition visited (r : nat → dist comp) (z : node) : Prop := ∃ n c ρ, (c, ρ) ∈ r n ∧ c.1 = z.
 
   Definition used_by (O : node → list msg) (S : node → bool) (r : nat → dist comp) (w : nat → item) :
       node → offer → Prop :=
@@ -50,20 +47,20 @@ Section Trace.
     ∧ fin (visited r).
 
   Definition quiet_outside (O : node → list msg) (S : node → bool) (r : nat → dist comp) : Prop :=
-    ∀ n, ¬ visited r n → S n = true ∧ O n = [].
+    ∀ z, ¬ visited r z → S z = true ∧ O z = [].
 
   Definition cells_sync (O : node → list msg) (S : node → bool) (Ch : channel → Prop) (K : tag → okind)
       (r : nat → dist comp) (w : nat → item) : Prop :=
-    ∀ n o, used_by O S r w n o → real_off p q Ch K o.
+    ∀ z o, used_by O S r w z o → real_off p q Ch K o.
 
   Definition outputs_sync (O : node → list msg) (S : node → bool) (Ch : channel → Prop) (K : tag → okind) : Prop :=
-    ∀ n k c v, S n = false → (k, c, v) ∈ O n → K k = KOut ∧ k ∉ otags p.1 ∧ k ∉ otags q.1 ∧ Ch c.
+    ∀ z t c v, S z = false → (t, c, v) ∈ O z → K t = KOut ∧ t ∉ otags p.1 ∧ t ∉ otags q.1 ∧ Ch c.
 
   Definition one_output_per_tag (O : node → list msg) (S : node → bool) : Prop :=
-    ∀ n k c v c' v', S n = false → (k, c, v) ∈ O n → (k, c', v') ∈ O n → c = c' ∧ v = v'.
+    ∀ z t c v c' v', S z = false → (t, c, v) ∈ O z → (t, c', v') ∈ O z → c = c' ∧ v = v'.
 
   Definition outputs_persist (O : node → list msg) (S : node → bool) : Prop :=
-    ∀ n a m, S (n ++ [a]) = false → m ∈ O n → m ∈ O (n ++ [a]).
+    ∀ z a m, S (z ++ [a]) = false → m ∈ O z → m ∈ O (z ++ [a]).
 
   Definition coherent (O : node → list msg) (S : node → bool) (Ch : channel → Prop) (K : tag → okind)
       (r : nat → dist comp) (w : nat → item) : Prop :=
@@ -86,14 +83,14 @@ Section Trace.
       (r : nat → dist comp) (w : nat → item) : SchedSts comp item :=
     mdlts (M := lq_menu O) (trace_menu O S Ch K r w) (trace_succ O S Ch K r w).
 
-  Lemma trace_menu_spec O S Ch K r w n o :
-    trace_menu O S Ch K r w n o ↔ used_by O S r w n o ∨ (real_off p q Ch K o ∧ ¬ refused_by O S r w n o).
+  Lemma trace_menu_spec O S Ch K r w z o :
+    trace_menu O S Ch K r w z o ↔ used_by O S r w z o ∨ (real_off p q Ch K o ∧ ¬ refused_by O S r w z o).
   Proof. done. Qed.
 
-  Lemma trace_succ_spec O S Ch K r w n :
-    trace_succ O S Ch K r w n = true ↔
-    S n = true ∨ ∃ m a m2, n = m ++ [a] ++ m2 ∧ trace_menu O S Ch K r w m (offer_of a)
-                           ∧ ¬ used_by O S r w m (offer_of a).
+  Lemma trace_succ_spec O S Ch K r w z :
+    trace_succ O S Ch K r w z = true ↔
+    S z = true ∨ ∃ z' a z2, z = z' ++ [a] ++ z2 ∧ trace_menu O S Ch K r w z' (offer_of a)
+                           ∧ ¬ used_by O S r w z' (offer_of a).
   Proof.
     split.
     - intros Hs. exact (Sstar_inv (M := lq_menu O) _ _ _ _ _ _ Hs).
@@ -101,11 +98,9 @@ Section Trace.
   Qed.
 
   Definition alt_trace : Prop :=
-    ∀ O S Ch K r w, (∀ k, K k ≠ KRec) → coherent O S Ch K r w → computation O S r w →
+    ∀ O S Ch K r w, (∀ t, K t ≠ KRec) → coherent O S Ch K r w → computation O S r w →
       ∃ r', is_run (SchedSts0 := trace_sts O S Ch K r w) Stay (dinit p) r'
           ∧ run_le (SchedSts0 := trace_sts O S Ch K r w) r' r.
 End Trace.
-
-End LqP.
 
 (* end hide *)

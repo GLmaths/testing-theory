@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,35 +19,17 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
-(* * The Harmony lemma of lqCCS with memory
 
-    The reduction semantics [sts] of configurations [⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩],
-    indexed by the choice [s], as the STS of VACCS
-    ([VACCS.Harmony_Lemma.Harmony]): communication, silent prefix, quantum
-    operation, measurement, initialisation, recursion, under parallel
-    composition, restriction and structural congruence.
-
-    The Harmony lemma relates the reductions to the silent transitions of
-    the composition memory ∣ program ([harmony_composition]).  The proof
-    follows VACCS: the shape lemmas [TransitionShapeForOutput],
-    [TransitionShapeForInput], [TransitionShapeForQuantum] and
-    [TransitionShapeForGuard] bring the redex of a transition to the top,
-    under iterated restrictions [Ѵ n] ([cgr_res_scope_n]).  A silent
-    transition of the program is a reduction ([Taus_Implies_Reduction]), and
-    so is a quantum action answered by the memory
-    ([Quantum_Implies_Reduction]); the converse
-    ([Reduction_Implies_Internal]) uses [Congruence_Respects_Transition]. *)
+(* * The Harmony lemma of lqCCS with memory relates the reductions to the silent transitions of the composition memory ∣ program ([STS_Harmony]). *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list sets relations.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Congruence lqCCS.Harmony_Lemma.Memory_Harmony lqCCS.lqCCS_process.STS.STS.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Congruence lqCCS.lqCCS_process.STS.STS.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope par_scope.
@@ -56,8 +37,8 @@ From TestingTheory Require Import lqCCS.lqCCS_prog.Congruence lqCCS.Harmony_Lemm
 
 (* ** Iterated restrictions and congruence *)
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section STS_Harmony.
+  Context `{lqP : lqCCS_Parameters}.
 
 Lemma cgr_resn n P Q : P ≡* Q → Ѵ n P ≡* Ѵ n Q.
 Proof. intros H. induction n; simpl; [done|]. by apply cgr_res. Qed.
@@ -76,11 +57,11 @@ Qed.
 
 (* ** The shapes of the transitions *)
 
-Lemma gstep_in_shape (g : guard) s c v Q' :
-  g ⟶ᵍ{c ? v}[s] Q' →
-  ∃ (t : tag) P K, s = {[+ t +]} ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆ᵥ.
+Lemma gstep_in_shape (g : guard) k c v Q' :
+  g ⟶ᵍ{c ? v}[k] Q' →
+  ∃ (t : tag) P K, k = {[+ t +]} ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆ᵥ.
 Proof.
-  intros Hs. remember (c ? v) as l eqn:El.
+  intros Hs. remember (c ? v) as 𝜆 eqn:El.
   induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs]; simplify_eq.
   - exists t, P, 𝟘{ [] }. split_and!; [done|apply gcgr_choice_nil_rev|done].
   - destruct (IHHs eq_refl) as (t & P & K & -> & Hg & ->).
@@ -91,12 +72,12 @@ Proof.
     by rewrite gcgr_choice_com, Hg, gcgr_choice_assoc.
 Qed.
 
-Lemma TransitionShapeForOutput P s c v Q :
-  P ⟶ₚ{c ! v}[s] Q →
-  ∃ (t : tag) e R n, 〚 e 〛 = v ∧ s = {[+ t +]}
+Lemma TransitionShapeForOutput P k c v Q :
+  P ⟶ₚ{c ! v}[k] Q →
+  ∃ (t : tag) e R n, 〚 e 〛 = v ∧ k = {[+ t +]}
     ∧ P ≡* Ѵ n (t ∶ (ren_chan (Nat.add n) c) ! e ∥ R) ∧ Q ≡* Ѵ n (𝟘 ∥ R).
 Proof.
-  intros Hs. remember (c ! v) as l eqn:El. revert c v El.
+  intros Hs. remember (c ! v) as 𝜆 eqn:El. revert c v El.
   induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros c0 v0 El; simplify_eq.
   - exfalso. by eapply prog_gstep_not_out, pr_guard.
   - exists t, e, 𝟘, 0. split_and!; [done|done| |].
@@ -122,13 +103,13 @@ Proof.
     + by apply cgr_res.
 Qed.
 
-Lemma TransitionShapeForInput P s c v Q :
-  P ⟶ₚ{c ? v}[s] Q →
-  ∃ (t : tag) P1 K R n, s = {[+ t +]}
+Lemma TransitionShapeForInput P k c v Q :
+  P ⟶ₚ{c ? v}[k] Q →
+  ∃ (t : tag) P1 K R n, k = {[+ t +]}
     ∧ P ≡* Ѵ n (((t ∶ (ren_chan (Nat.add n) c) ? ∙ P1) + K) ∥ R)
     ∧ Q ≡* Ѵ n (P1 ⁅ v ⁆ᵥ ∥ R).
 Proof.
-  intros Hs. remember (c ? v) as l eqn:El. revert c v El.
+  intros Hs. remember (c ? v) as 𝜆 eqn:El. revert c v El.
   induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros c0 v0 El; simplify_eq.
   - destruct (gstep_in_shape _ _ _ _ _ H) as (t & P1 & K & -> & Hg & ->).
     exists t, P1, K, 𝟘, 0. split_and!; [done| |].
@@ -156,58 +137,58 @@ Qed.
 
 (* ** Sums: the guard that moves can be brought in front *)
 
-Lemma TransitionShapeForGuard (g : guard) s l P' :
-  g ⟶ᵍ{l}[s] P' →
-  ∃ 𝜆 Q K, g ≡ᵍ* ((𝜆 ∙ Q) + K) ∧ (𝜆 ∙ Q) ⟶ₚ{l}[s] P'.
+Lemma TransitionShapeForGuard (g : guard) k 𝜆 P' :
+  g ⟶ᵍ{𝜆}[k] P' →
+  ∃ π Q K, g ≡ᵍ* ((π ∙ Q) + K) ∧ (π ∙ Q) ⟶ₚ{𝜆}[k] P'.
 Proof.
   intros Hs0. induction Hs0 as [t P | t c v P | t U es qs P Hq | t M es qs n P Hq | t e q P Hq
-                 | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH].
+                 | g1 g2 k 𝜆 P' Hg IH | g1 g2 k 𝜆 P' Hg IH].
   - exists (t ∶ 𝛕), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|apply pr_tau].
   - exists (t ∶ c ?), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|apply pr_recv].
   - exists (t ∶ U ⦅es⦆), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_op].
   - exists (t ∶ M ⦅es ▷⦆), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_meas].
   - exists (t ∶ e := |0⟩), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_init].
-  - destruct IH as (𝜆 & Q & K & Hc & Hs).
-    exists 𝜆, Q, (K + g2)%lq. split; [|done].
+  - destruct IH as (π & Q & K & Hc & Hs).
+    exists π, Q, (K + g2)%lq. split; [|done].
     by rewrite Hc, gcgr_choice_assoc.
-  - destruct IH as (𝜆 & Q & K & Hc & Hs).
-    exists 𝜆, Q, (K + g1)%lq. split; [|done].
+  - destruct IH as (π & Q & K & Hc & Hs).
+    exists π, Q, (K + g1)%lq. split; [|done].
     by rewrite gcgr_choice_com, Hc, gcgr_choice_assoc.
 Qed.
 
-Definition quant_action (a : prog_action) : Prop :=
-  match a with PrOut _ _ | PrIn _ _ => False | _ => True end.
+Definition quant_action (μ : prog_action) : Prop :=
+  match μ with PrOut _ _ | PrIn _ _ => False | _ => True end.
 
-Lemma TransitionShapeForQuantum P s a Q :
-  quant_action a → P ⟶ₚ{ActExt a}[s] Q →
-  ∃ 𝜆 P1 K R n Q1, P ≡* Ѵ n (((𝜆 ∙ P1) + K) ∥ R)
-    ∧ (𝜆 ∙ P1) ⟶ₚ{ActExt a}[s] Q1 ∧ Q ≡* Ѵ n (Q1 ∥ R).
+Lemma TransitionShapeForQuantum P k μ Q :
+  quant_action μ → P ⟶ₚ{ActExt μ}[k] Q →
+  ∃ π P1 K R n Q1, P ≡* Ѵ n (((π ∙ P1) + K) ∥ R)
+    ∧ (π ∙ P1) ⟶ₚ{ActExt μ}[k] Q1 ∧ Q ≡* Ѵ n (Q1 ∥ R).
 Proof.
-  intros Ha Hs. remember (ActExt a) as l eqn:El. revert a Ha El.
-  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros a0 Ha El; simplify_eq.
-  - destruct (TransitionShapeForGuard _ _ _ _ H) as (𝜆 & Q0 & K & Hg & Hs0).
-    exists 𝜆, Q0, K, 𝟘, 0, P'. split_and!; [|done|].
+  intros Ha Hs. remember (ActExt μ) as 𝜆 eqn:El. revert μ Ha El.
+  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros μ0 Ha El; simplify_eq.
+  - destruct (TransitionShapeForGuard _ _ _ _ H) as (π & Q0 & K & Hg & Hs0).
+    exists π, Q0, K, 𝟘, 0, P'. split_and!; [|done|].
     + simpl. etrans; [by apply cgr_guard|]. apply cgr_par_nil_rev.
     + simpl. apply cgr_par_nil_rev.
   - done.
-  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
-    exists 𝜆, P1, K, R, n, Q1. split_and!; [|done|done].
+  - destruct (IHHs _ Ha eq_refl) as (π & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists π, P1, K, R, n, Q1. split_and!; [|done|done].
     etrans; [|exact HP]. by apply cgr_if_true.
-  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
-    exists 𝜆, P1, K, R, n, Q1. split_and!; [|done|done].
+  - destruct (IHHs _ Ha eq_refl) as (π & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists π, P1, K, R, n, Q1. split_and!; [|done|done].
     etrans; [|exact HP]. by apply cgr_if_false.
-  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
-    exists 𝜆, P1, K, (R ∥ ren (Nat.add n) Q), n, Q1. split_and!; [|done|].
+  - destruct (IHHs _ Ha eq_refl) as (π & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists π, P1, K, (R ∥ ren (Nat.add n) Q), n, Q1. split_and!; [|done|].
     + by rewrite HP, cgr_res_scope_n, cgr_par_assoc.
     + by rewrite HQ, cgr_res_scope_n, cgr_par_assoc.
-  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
-    exists 𝜆, P1, K, (R ∥ ren (Nat.add n) P), n, Q1. split_and!; [|done|].
+  - destruct (IHHs _ Ha eq_refl) as (π & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists π, P1, K, (R ∥ ren (Nat.add n) P), n, Q1. split_and!; [|done|].
     + by rewrite cgr_par_com, HP, cgr_res_scope_n, cgr_par_assoc.
     + by rewrite cgr_par_com, HQ, cgr_res_scope_n, cgr_par_assoc.
-  - assert (E : ren_lbl S (ActExt a0) = ActExt a0) by (destruct a0; simpl in *; done).
-    destruct (IHHs _ Ha E) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+  - assert (E : ren_lbl S (ActExt μ0) = ActExt μ0) by (destruct μ0; simpl in *; done).
+    destruct (IHHs _ Ha E) as (π & P1 & K & R & n & Q1 & HP & Hg & HQ).
     rewrite E in Hg.
-    exists 𝜆, P1, K, R, (S n), Q1. split_and!; [by apply cgr_res|done|by apply cgr_res].
+    exists π, P1, K, R, (S n), Q1. split_and!; [by apply cgr_res|done|by apply cgr_res].
 Qed.
 
 
@@ -216,25 +197,25 @@ Section STS.
 
   (* ** Silent transitions of the composition memory ∣ program *)
 
-  Lemma comp_tau_inv ρ P s ρ' P' :
-    ρ ∣ P ⟶{τ}[s] ρ' ∣ P' →
-    (P ⟶ₚ{τ}[s] P' ∧ ρ' = ρ) ∨ (∃ a b, P ⟶ₚ{ActExt a}[s] P' ∧ ρ ⟶ₘ{b} ρ' ∧ 𝔻ₘₑₘ b a).
+  Lemma comp_tau_inv ρ P k ρ' P' :
+    ρ ∣ P ⟶{τ}[k] ρ' ∣ P' →
+    (P ⟶ₚ{τ}[k] P' ∧ ρ' = ρ) ∨ (∃ μ2 μ1, P ⟶ₚ{ActExt μ2}[k] P' ∧ ρ ⟶ₘ{μ1} ρ' ∧ 𝔻ₘₑₘ μ1 μ2).
   Proof.
-    intros Hp. inversion Hp as [? ? ? l ? Hm El | ? ? ? l ? Hq El | ? ? c1 c2 μ1 μ2 ? ? Hm Hq Hs]; subst.
-    - destruct (mem_step_choice _ _ _ _ Hm) as (_ & b & ->). discriminate.
-    - destruct l; [discriminate |]. by left.
+    intros Hp. inversion Hp as [? ? ? 𝜆 ? Hm El | ? ? ? 𝜆 ? Hq El | ? ? c1 c2 μ1 μ2 ? ? Hm Hq Hs]; subst.
+    - destruct (mem_step_choice _ _ _ _ Hm) as (_ & μ1 & ->). discriminate.
+    - destruct 𝜆; [discriminate |]. by left.
     - destruct (mem_step_choice _ _ _ _ Hm) as (-> & _).
       rewrite (left_id_L ∅ (⊎) c2). right. by exists μ2, μ1.
   Qed.
 
-  Lemma comp_tau_right ρ P s P' : P ⟶ₚ{τ}[s] P' → ρ ∣ P ⟶{τ}[s] ρ ∣ P'.
-  Proof. intros Hp. exact (par_right mem_step prog_step sync ρ P s τ P' Hp). Qed.
+  Lemma comp_tau_right ρ P k P' : P ⟶ₚ{τ}[k] P' → ρ ∣ P ⟶{τ}[k] ρ ∣ P'.
+  Proof. intros Hp. exact (par_right mem_step prog_step sync ρ P k τ P' Hp). Qed.
 
-  Lemma comp_tau_sync ρ P s a P' b ρ' :
-    P ⟶ₚ{ActExt a}[s] P' → ρ ⟶ₘ{b} ρ' → 𝔻ₘₑₘ b a → ρ ∣ P ⟶{τ}[s] ρ' ∣ P'.
-  Proof. intros Hp Hm Hs. rewrite <- (left_id_L ∅ (⊎) s). eapply par_sync; [exact Hm | exact Hp | exact Hs]. Qed.
+  Lemma comp_tau_sync ρ P k μ2 P' μ1 ρ' :
+    P ⟶ₚ{ActExt μ2}[k] P' → ρ ⟶ₘ{μ1} ρ' → 𝔻ₘₑₘ μ1 μ2 → ρ ∣ P ⟶{τ}[k] ρ' ∣ P'.
+  Proof. intros Hp Hm Hs. rewrite <- (left_id_L ∅ (⊎) k). eapply par_sync; [exact Hm | exact Hp | exact Hs]. Qed.
 
-  Lemma sts_resn n ρ P s ρ' P' : ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩ → ⟨ρ, Ѵ n P⟩ ⟶[s] ⟨ρ', Ѵ n P'⟩.
+  Lemma sts_resn n ρ P k ρ' P' : ⟨ρ, P⟩ ⟶[k] ⟨ρ', P'⟩ → ⟨ρ, Ѵ n P⟩ ⟶[k] ⟨ρ', Ѵ n P'⟩.
   Proof. intros Hs. induction n; simpl; [done|]. by apply sts_res. Qed.
 
   (* ** From the LTS to the STS *)
@@ -275,14 +256,14 @@ Section STS.
   Qed.
 
   (* A silent transition of the program is a reduction. *)
-  Lemma Taus_Implies_Reduction ρ P s P' : P ⟶ₚ{τ}[s] P' → ⟨ρ, P⟩ ⟶[s] ⟨ρ, P'⟩.
+  Lemma Taus_Implies_Reduction ρ P k P' : P ⟶ₚ{τ}[k] P' → ⟨ρ, P⟩ ⟶[k] ⟨ρ, P'⟩.
   Proof.
-    intros Hp. remember (τ : Labels prog_action) as l eqn:El. revert El.
-    induction Hp as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH
-                   | P Q s l P' Hp IH | P Q s l Q' Hp IH
+    intros Hp. remember (τ : Labels prog_action) as 𝜆 eqn:El. revert El.
+    induction Hp as [g k 𝜆 P' Hg | t c e v He | e P Q k 𝜆 P' He Hp IH | e P Q k 𝜆 Q' He Hp IH
+                   | P Q k 𝜆 P' Hp IH | P Q k 𝜆 Q' Hp IH
                    | P Q t t' c v P' Q' HpP _ HpQ _ | P Q t t' c v P' Q' HpP _ HpQ _
-                   | P s l P' Hp IH | t P]; intros El; subst.
-    - destruct (TransitionShapeForGuard _ _ _ _ Hg) as (𝜆 & Q & K & Hcg & Hs).
+                   | P k 𝜆 P' Hp IH | t P]; intros El; subst.
+    - destruct (TransitionShapeForGuard _ _ _ _ Hg) as (π & Q & K & Hcg & Hs).
       eapply sts_cong; [apply cgr_guard, Hcg| |reflexivity].
       apply prog_step_guard in Hs. inversion Hs; subst. apply sts_tau.
     - discriminate.
@@ -306,11 +287,11 @@ Section STS.
   Qed.
 
   (* A quantum action of the program answered by the memory is a reduction. *)
-  Lemma Quantum_Implies_Reduction ρ P s a P' b ρ' :
-    P ⟶ₚ{ActExt a}[s] P' → ρ ⟶ₘ{b} ρ' → 𝔻ₘₑₘ b a → ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩.
+  Lemma Quantum_Implies_Reduction ρ P k μ2 P' μ1 ρ' :
+    P ⟶ₚ{ActExt μ2}[k] P' → ρ ⟶ₘ{μ1} ρ' → 𝔻ₘₑₘ μ1 μ2 → ⟨ρ, P⟩ ⟶[k] ⟨ρ', P'⟩.
   Proof.
-    intros Hp Hm Hd. assert (Ha : quant_action a) by (by destruct Hd).
-    destruct (TransitionShapeForQuantum _ _ _ _ Ha Hp) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    intros Hp Hm Hd. assert (Ha : quant_action μ2) by (by destruct Hd).
+    destruct (TransitionShapeForQuantum _ _ _ _ Ha Hp) as (π & P1 & K & R & n & Q1 & HP & Hg & HQ).
     eapply sts_cong; [exact HP| |symmetry; exact HQ].
     apply sts_resn, sts_par.
     apply prog_step_guard in Hg. inversion Hd; subst; inversion Hm; subst; inversion Hg; subst.
@@ -319,24 +300,24 @@ Section STS.
     - by apply sts_init.
   Qed.
 
-  Lemma Internal_Implies_Reduction ρ P s ρ' P' :
-    ρ ∣ P ⟶{τ}[s] ρ' ∣ P' → ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩.
+  Lemma Internal_Implies_Reduction ρ P k ρ' P' :
+    ρ ∣ P ⟶{τ}[k] ρ' ∣ P' → ⟨ρ, P⟩ ⟶[k] ⟨ρ', P'⟩.
   Proof.
-    intros Hc. destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)].
+    intros Hc. destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(μ2 & μ1 & Hp & Hm & Hd)].
     - by apply Taus_Implies_Reduction.
     - by eapply Quantum_Implies_Reduction.
   Qed.
 
   (* ** From the STS to the LTS *)
 
-  Lemma Reduction_Implies_Internal ρ P s ρ' Q :
-    ⟨ρ, P⟩ ⟶[s] ⟨ρ', Q⟩ → ∃ Q', ρ ∣ P ⟶{τ}[s] ρ' ∣ Q' ∧ Q' ≡* Q.
+  Lemma Reduction_Implies_Internal ρ P k ρ' Q :
+    ⟨ρ, P⟩ ⟶[k] ⟨ρ', Q⟩ → ∃ Q', ρ ∣ P ⟶{τ}[k] ρ' ∣ Q' ∧ Q' ≡* Q.
   Proof.
     induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t U es qs P K Hq | ρ t e q P K Hq
-                   | ρ t M es qs k P K Hq Hk | ρ t P
-                   | ρ P s ρ' P' Q _ (P'' & Hc & HP)
-                   | ρ P s ρ' P' _ (P'' & Hc & HP)
-                   | ρ P P1 s ρ' Q1 Q Hcg _ (Q1' & Hc & HQ) Hcg'].
+                   | ρ t M es qs n P K Hq Hk | ρ t P
+                   | ρ P k ρ' P' Q _ (P'' & Hc & HP)
+                   | ρ P k ρ' P' _ (P'' & Hc & HP)
+                   | ρ P P1 k ρ' Q1 Q Hcg _ (Q1' & Hc & HQ) Hcg'].
     - exists (𝟘 ∥ P ⁅ v ⁆ᵥ). split; [|reflexivity]. apply comp_tau_right.
       eapply pr_syncL; [by apply pr_send | apply pr_sumL, pr_recv].
     - exists P. split; [|reflexivity]. apply comp_tau_right.
@@ -345,19 +326,19 @@ Section STS.
       eapply comp_tau_sync; [by apply pr_sumL, pr_op | apply (me_sop ρ (sop_act U qs)) | constructor].
     - exists P. split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_init | apply (me_sop ρ (init_act q)) | constructor].
-    - exists (P ⁅ VNat k ⁆ᵥ). split; [|reflexivity].
+    - exists (P ⁅ VNat n ⁆ᵥ). split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_meas | by apply me_meas | constructor].
     - exists (P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ). split; [|reflexivity]. apply comp_tau_right, pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par].
-      destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)].
+      destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(μ2 & μ1 & Hp & Hm & Hd)].
       + apply comp_tau_right. by apply pr_parL.
       + eapply comp_tau_sync; [by apply pr_parL | exact Hm | exact Hd].
     - exists (ν P''). split; [|by apply cgr_res].
-      destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)].
+      destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(μ2 & μ1 & Hp & Hm & Hd)].
       + apply comp_tau_right. by apply pr_res.
       + eapply comp_tau_sync; [|exact Hm | exact Hd].
         apply pr_res. by rewrite (sync_lbl_ren _ _ Hd).
-    - destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)];
+    - destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(μ2 & μ1 & Hp & Hm & Hd)];
         destruct (Congruence_Respects_Transition P _ _ _ (ex_intro _ P1 (conj Hcg Hp))) as (Q' & Hp' & HQ');
         exists Q'.
       + split; [by apply comp_tau_right|]. etrans; [exact HQ'|]. etrans; [exact HQ|exact Hcg'].
@@ -366,8 +347,8 @@ Section STS.
 
   (* ** The Harmony lemma *)
 
-  Theorem harmony_composition ρ P s ρ' Q :
-    ⟨ρ, P⟩ ⟶[s] ⟨ρ', Q⟩ ↔ ∃ Q', ρ ∣ P ⟶{τ}[s] ρ' ∣ Q' ∧ Q' ≡* Q.
+  Theorem STS_Harmony ρ P k ρ' Q :
+    ⟨ρ, P⟩ ⟶[k] ⟨ρ', Q⟩ ↔ ∃ Q', ρ ∣ P ⟶{τ}[k] ρ' ∣ Q' ∧ Q' ≡* Q.
   Proof.
     split; [apply Reduction_Implies_Internal|].
     intros (Q' & Hc & HQ).
@@ -375,16 +356,10 @@ Section STS.
   Qed.
 
   (* The same statement on the LTS given directly on the configurations. *)
-  Theorem harmony ρ P s ρ' Q :
-    ⟨ρ, P⟩ ⟶[s] ⟨ρ', Q⟩ ↔ ∃ Q', ⟨ρ, P⟩ ⟶{τ}[s] ⟨ρ', Q'⟩ ∧ Q' ≡* Q.
-  Proof.
-    rewrite harmony_composition.
-    split; intros (Q' & Hc & HQ); exists Q'; (split; [by apply pre_harmony|done]).
-  Qed.
 End STS.
 
 
-End LqP.
+End STS_Harmony.
 
 
 (* end hide *)

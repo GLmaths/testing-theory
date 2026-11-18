@@ -25,46 +25,43 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
-
 Section Characterisation.
-  Context `{QM : QuantumModel} (p q : proc * St).
+  Context `{lqP : lqCCS_Parameters} `{QM : QuantumModel} (p q : prog * St).
 
-  Definition run_against (T : proc) (r : nat → dist comp) (w : nat → item) : Prop :=
+  Definition run_against (T : prog) (r : nat → dist comp) (w : nat → item) : Prop :=
     run_word (M := lq_menu (O_T T)) (menu T) (S_T T) (dinit q) r w.
 
-  Definition used (T : proc) (r : nat → dist comp) (w : nat → item) : node → offer → Prop :=
+  Definition used (T : prog) (r : nat → dist comp) (w : nat → item) : node → offer → Prop :=
     cells (M := lq_menu (O_T T)) (S_T T) r w.
 
-  Definition refused_by (T : proc) (r : nat → dist comp) (w : nat → item) : node → offer → Prop :=
+  Definition refused_by (T : prog) (r : nat → dist comp) (w : nat → item) : node → offer → Prop :=
     refused (M := lq_menu (O_T T)) (used T r w) (S_T T) r w.
 
-  Definition admissible (T : proc) : offer → Prop :=
+  Definition admissible (T : prog) : offer → Prop :=
     real_off p q (λ c, c ∈ out_chans T) (kinds_of T).
 
-  Definition canon_menu (T : proc) (r : nat → dist comp) (w : nat → item) : node → offer → Prop :=
+  Definition canon_menu (T : prog) (r : nat → dist comp) (w : nat → item) : node → offer → Prop :=
     Jstar (M := lq_menu (O_T T)) (admissible T) (used T r w) (S_T T) r w.
 
-  Definition canon_succ (T : proc) (r : nat → dist comp) (w : nat → item) : node → bool :=
+  Definition canon_succ (T : prog) (r : nat → dist comp) (w : nat → item) : node → bool :=
     Sstar (M := lq_menu (O_T T)) (admissible T) (used T r w) (S_T T) r w.
 
-  Definition canon_sts (T : proc) (r : nat → dist comp) (w : nat → item) : SchedSts comp item :=
+  Definition canon_sts (T : prog) (r : nat → dist comp) (w : nat → item) : SchedSts comp item :=
     mdlts (M := lq_menu (O_T T)) (canon_menu T r w) (canon_succ T r w).
 
-  Lemma canon_menu_spec T r w n o :
-    canon_menu T r w n o ↔ used T r w n o ∨ (admissible T o ∧ ¬ refused_by T r w n o).
+  Lemma canon_menu_spec T r w z o :
+    canon_menu T r w z o ↔ used T r w z o ∨ (admissible T o ∧ ¬ refused_by T r w z o).
   Proof. done. Qed.
 
-  Lemma canon_succ_spec T r w n :
-    canon_succ T r w n = true ↔
-    S_T T n = true ∨ ∃ m a m2, n = m ++ [a] ++ m2 ∧ canon_menu T r w m (offer_of a) ∧ ¬ used T r w m (offer_of a).
+  Lemma canon_succ_spec T r w z :
+    canon_succ T r w z = true ↔
+    S_T T z = true ∨ ∃ z' a z2, z = z' ++ [a] ++ z2 ∧ canon_menu T r w z' (offer_of a) ∧ ¬ used T r w z' (offer_of a).
   Proof.
     split.
     - intros Hs. exact (Sstar_inv (M := lq_menu (O_T T)) _ _ _ _ _ _ Hs).
@@ -82,11 +79,11 @@ Section Characterisation.
   Proof.
     intros Hz. split.
     - intros Hc T HT r w Hr.
-      apply (proj1 (alt_free_obs_iff DC p q Hz) Hc (O_T T) (λ c, c ∈ out_chans T) (kinds_of T) (λ k, kinds_of_norec T k (proj1 (proj1 (proj1 HT)))) (menu T) (S_T T));
+      apply (proj1 (alt_free_obs_iff DC p q Hz) Hc (O_T T) (λ c, c ∈ out_chans T) (kinds_of T) (λ t, kinds_of_norec T t (proj1 (proj1 (proj1 HT)))) (menu T) (S_T T));
         [|exact Hr].
-      split; [|intros n o Hm; exact (menu_real p q T n o HT Hm)].
+      split; [|intros z o Hm; exact (menu_real p q T z o HT Hm)].
       exists T. split; [done|]. split; [done|]. split; [done|]. split; [done|]. split; [done|].
-      intros k x Hin. exact (kinds_of_tagged T k x (proj1 HT) Hin).
+      intros t x Hin. exact (kinds_of_tagged T t x (proj1 HT) Hin).
     - intros Ha. apply (alt_pre_obs_iff Stay DC p q). intros T HT r2 Hr2.
       destruct (is_run_word (M := lq_menu (O_T T)) DC (menu T) (S_T T) _ r2 Hr2) as (w & Hw).
       destruct (Ha T HT r2 w Hw) as (rs & Hrs & Hle).
@@ -94,10 +91,8 @@ Section Characterisation.
                 (menu T) (S_T T) r2 w rs _ _ _ Hw Hrs Hle).
       + intros x ->%list_elem_of_singleton. done.
       + intros x ->%list_elem_of_singleton. exact Hz.
-      + intros n o Hm. exact (menu_real p q T n o HT Hm).
+      + intros z o Hm. exact (menu_real p q T z o HT Hm).
   Qed.
 End Characterisation.
-
-End LqP.
 
 (* end hide *)

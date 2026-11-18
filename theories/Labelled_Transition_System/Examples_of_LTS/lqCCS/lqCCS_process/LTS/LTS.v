@@ -20,32 +20,44 @@
    SOFTWARE.
 *)
 
-(* * lqCCS: the LTS of processes [⟨ρ, P⟩] *)
+(* * The LTS of lqCCS processes [⟨ρ, P⟩] *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list sets numbers.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS.
-From TestingTheory Require Import lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS.
+From TestingTheory Require Import lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.Helper.Conf_labels.
 
 #[local] Open Scope lqccs_scope.
+
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
-
-Reserved Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ l }[ s ]  ⟨ ρ' ,  P' ⟩").
+Reserved Notation "⟨ ρ , P ⟩ ⟶{ 𝜆 }[ k ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ 𝜆 }[ k ]  ⟨ ρ' ,  P' ⟩").
 Reserved Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶ₘ{ μ }  ⟨ ρ' ,  P' ⟩").
 
-Section Process.
-  Context `{QM : QuantumModel}.
+Section Process_LTS.
+  Context `{lqP : lqCCS_Parameters} `{QM : QuantumModel}.
 
-  (* ** The configuration LTS *)
+  (* Renaming of the channels of a label. *)
+  Definition ren_clbl (f : nat → nat) (𝜆 : Labels (mem_action + prog_action)) : Labels (mem_action + prog_action) :=
+    match 𝜆 with
+    | ActExt (inr μ) => ActExt (inr (ren_action f μ))
+    | _ => 𝜆
+    end.
 
-  Inductive conf_step (ρ : St) : proc → choice → Labels prog_action + mem_action → St → proc → Prop :=
+  Lemma ren_clbl_lift f (𝜆 : Labels prog_action) :
+    ren_clbl f (lbl_inr 𝜆) = @lbl_inr mem_action prog_action (ren_lbl f 𝜆).
+  Proof. by destruct 𝜆. Qed.
+
+  (* ** The configuration LTS
+
+      The rules of the contexts carry the actions of the program only: a move
+      of the memory does not go through a context. *)
+
+  Inductive conf_step (ρ : St) : prog → choice → Labels (mem_action + prog_action) → St → prog → Prop :=
   | co_tau t P :
       ⟨ρ, t ∶ 𝛕 ∙ P⟩ ⟶{τ}[{[+ t +]}] ⟨ρ, P⟩
   | co_recv t c v P :
@@ -59,20 +71,20 @@ Section Process.
   | co_init t e q P :
       eval_qubit e = Some q →
       ⟨ρ, t ∶ e := |0⟩ ∙ P⟩ ⟶{reinit q}[{[+ t +]}] ⟨ρ, P⟩
-  | co_sumL (g1 g2 : guard) s l ρ' P' :
-      ⟨ρ, g1⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, g1 + g2⟩ ⟶{l}[s] ⟨ρ', P'⟩
-  | co_sumR (g1 g2 : guard) s l ρ' P' :
-      ⟨ρ, g2⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, g1 + g2⟩ ⟶{l}[s] ⟨ρ', P'⟩
+  | co_sumL (g1 g2 : guard) k 𝜆 ρ' P' :
+      (∀ μ, 𝜆 ≠ ActExt (mlbl μ)) → ⟨ρ, g1⟩ ⟶{𝜆}[k] ⟨ρ', P'⟩ → ⟨ρ, g1 + g2⟩ ⟶{𝜆}[k] ⟨ρ', P'⟩
+  | co_sumR (g1 g2 : guard) k 𝜆 ρ' P' :
+      (∀ μ, 𝜆 ≠ ActExt (mlbl μ)) → ⟨ρ, g2⟩ ⟶{𝜆}[k] ⟨ρ', P'⟩ → ⟨ρ, g1 + g2⟩ ⟶{𝜆}[k] ⟨ρ', P'⟩
   | co_send t c e v :
       〚 e 〛 = v → ⟨ρ, t ∶ c ! e⟩ ⟶{c ! v}[{[+ t +]}] ⟨ρ, 𝟘⟩
-  | co_iteT e P Q s l ρ' P' :
-      〚 e 〛 = true → ⟨ρ, P⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{l}[s] ⟨ρ', P'⟩
-  | co_iteF e P Q s l ρ' Q' :
-      〚 e 〛 = false → ⟨ρ, Q⟩ ⟶{l}[s] ⟨ρ', Q'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{l}[s] ⟨ρ', Q'⟩
-  | co_parL P Q s l ρ' P' :
-      ⟨ρ, P⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶{l}[s] ⟨ρ', P' ∥ Q⟩
-  | co_parR P Q s l ρ' Q' :
-      ⟨ρ, Q⟩ ⟶{l}[s] ⟨ρ', Q'⟩ → ⟨ρ, P ∥ Q⟩ ⟶{l}[s] ⟨ρ', P ∥ Q'⟩
+  | co_iteT e P Q k 𝜆 ρ' P' :
+      〚 e 〛 = true → (∀ μ, 𝜆 ≠ ActExt (mlbl μ)) → ⟨ρ, P⟩ ⟶{𝜆}[k] ⟨ρ', P'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{𝜆}[k] ⟨ρ', P'⟩
+  | co_iteF e P Q k 𝜆 ρ' Q' :
+      〚 e 〛 = false → (∀ μ, 𝜆 ≠ ActExt (mlbl μ)) → ⟨ρ, Q⟩ ⟶{𝜆}[k] ⟨ρ', Q'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{𝜆}[k] ⟨ρ', Q'⟩
+  | co_parL P Q k 𝜆 ρ' P' :
+      (∀ μ, 𝜆 ≠ ActExt (mlbl μ)) → ⟨ρ, P⟩ ⟶{𝜆}[k] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶{𝜆}[k] ⟨ρ', P' ∥ Q⟩
+  | co_parR P Q k 𝜆 ρ' Q' :
+      (∀ μ, 𝜆 ≠ ActExt (mlbl μ)) → ⟨ρ, Q⟩ ⟶{𝜆}[k] ⟨ρ', Q'⟩ → ⟨ρ, P ∥ Q⟩ ⟶{𝜆}[k] ⟨ρ', P ∥ Q'⟩
   | co_syncL P Q (t t' : tag) c v P' Q' :
       ⟨ρ, P⟩ ⟶{c ! v}[{[+ t +]}] ⟨ρ, P'⟩ →
       ⟨ρ, Q⟩ ⟶{c ? v}[{[+ t' +]}] ⟨ρ, Q'⟩ →
@@ -81,38 +93,34 @@ Section Process.
       ⟨ρ, P⟩ ⟶{c ? v}[{[+ t +]}] ⟨ρ, P'⟩ →
       ⟨ρ, Q⟩ ⟶{c ! v}[{[+ t' +]}] ⟨ρ, Q'⟩ →
       ⟨ρ, P ∥ Q⟩ ⟶{τ}[{[+ t; t' +]}] ⟨ρ, P' ∥ Q'⟩
-  | co_res P s l ρ' P' :
-      ⟨ρ, P⟩ ⟶{ren_lbl S l}[s] ⟨ρ', P'⟩ → ⟨ρ, ν P⟩ ⟶{l}[s] ⟨ρ', ν P'⟩
+  | co_res P k 𝜆 ρ' P' :
+      (∀ μ, 𝜆 ≠ ActExt (mlbl μ)) → ⟨ρ, P⟩ ⟶{ren_clbl S 𝜆}[k] ⟨ρ', P'⟩ → ⟨ρ, ν P⟩ ⟶{𝜆}[k] ⟨ρ', ν P'⟩
   | co_rec t P :
       ⟨ρ, t ∶ rec ∙ P⟩ ⟶{τ}[{[+ t +]}] ⟨ρ, P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ⟩
   | co_mem_sop P (ℰ : Act) :
       ⟨ρ, P⟩ ⟶ₘ{? ℰ} ⟨ℰ · ρ, P⟩
-  | co_mem_meas P ℳ k :
-      k ∈ outs ℳ → ⟨ρ, P⟩ ⟶ₘ{ℳ !ₘ k} ⟨ℳ ·[k] ρ, P⟩
-  | co_opCom P s U qs ρ' P' :
-      ⟨ρ, P⟩ ⟶{⦅qs⦆ ! U}[s] ⟨ρ, P'⟩ →
+  | co_mem_meas P ℳ n :
+      n ∈ outs ℳ → ⟨ρ, P⟩ ⟶ₘ{ℳ !ₘ n} ⟨ℳ ·[n] ρ, P⟩
+  | co_opCom P k U qs ρ' P' :
+      ⟨ρ, P⟩ ⟶{⦅qs⦆ ! U}[k] ⟨ρ, P'⟩ →
       ⟨ρ, P⟩ ⟶ₘ{? (sop_act U qs)} ⟨ρ', P⟩ →
-      ⟨ρ, P⟩ ⟶{τ}[s] ⟨ρ', P'⟩
-  | co_measCom P s M qs n ρ' P' :
-      ⟨ρ, P⟩ ⟶{M ⦅qs⦆? n}[s] ⟨ρ, P'⟩ →
+      ⟨ρ, P⟩ ⟶{τ}[k] ⟨ρ', P'⟩
+  | co_measCom P k M qs n ρ' P' :
+      ⟨ρ, P⟩ ⟶{M ⦅qs⦆? n}[k] ⟨ρ, P'⟩ →
       ⟨ρ, P⟩ ⟶ₘ{meas_of M qs !ₘ n} ⟨ρ', P⟩ →
-      ⟨ρ, P⟩ ⟶{τ}[s] ⟨ρ', P'⟩
-  | co_initCom P s q ρ' P' :
-      ⟨ρ, P⟩ ⟶{reinit q}[s] ⟨ρ, P'⟩ →
+      ⟨ρ, P⟩ ⟶{τ}[k] ⟨ρ', P'⟩
+  | co_initCom P k q ρ' P' :
+      ⟨ρ, P⟩ ⟶{reinit q}[k] ⟨ρ, P'⟩ →
       ⟨ρ, P⟩ ⟶ₘ{? (init_act q)} ⟨ρ', P⟩ →
-      ⟨ρ, P⟩ ⟶{τ}[s] ⟨ρ', P'⟩
-  where "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" := (conf_step ρ P s (inl l) ρ' P') : lqccs_scope
-  and "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P ∅ (inr (μ : mem_action)) ρ' P') : lqccs_scope.
-End Process.
+      ⟨ρ, P⟩ ⟶{τ}[k] ⟨ρ', P'⟩
+  where "⟨ ρ , P ⟩ ⟶{ 𝜆 }[ k ] ⟨ ρ' , P' ⟩" := (conf_step ρ P k 𝜆 ρ' P') : lqccs_scope
+  and "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P ∅ (ActExt (mlbl μ)) ρ' P') : lqccs_scope.
+End Process_LTS.
 
-End LqP.
-
-Reserved Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ l }[ s ]  ⟨ ρ' ,  P' ⟩").
-Reserved Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶ₘ{ μ }  ⟨ ρ' ,  P' ⟩").
-Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" := (conf_step ρ P s (inl l) ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ l }[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P ∅ (inr (μ : mem_action)) ρ' P')
+Notation "⟨ ρ , P ⟩ ⟶{ 𝜆 }[ k ] ⟨ ρ' , P' ⟩" := (conf_step ρ P k 𝜆 ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ 𝜆 }[ k ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P ∅ (ActExt (mlbl μ)) ρ' P')
   (at level 70, only parsing) : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P ∅ (inr μ) ρ' P')
+Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P ∅ (ActExt (mlbl μ)) ρ' P')
   (at level 70, only printing, format "⟨ ρ ,  P ⟩  ⟶ₘ{ μ }  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ↛{ l }[ s ] ⟨ ρ' , P' ⟩" := (¬ conf_step ρ P s (inl l) ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛{ l }[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ↛ₘ{ μ } ⟨ ρ' , P' ⟩" := (¬ conf_step ρ P ∅ (inr μ) ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛ₘ{ μ }  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ↛{ 𝜆 }[ k ] ⟨ ρ' , P' ⟩" := (¬ conf_step ρ P k 𝜆 ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛{ 𝜆 }[ k ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ↛ₘ{ μ } ⟨ ρ' , P' ⟩" := (¬ conf_step ρ P ∅ (ActExt (mlbl μ)) ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛ₘ{ μ }  ⟨ ρ' ,  P' ⟩") : lqccs_scope.

@@ -46,7 +46,7 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable list gmap gmultiset.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
 From TestingTheory Require Import lqCCS.To_review.Prob_dist.Language.Syntax lqCCS.To_review.Prob_dist.Language.Program lqCCS.To_review.Prob_dist.Language.Succ lqCCS.To_review.Prob_dist.Language.Congruence
   lqCCS.To_review.Prob_dist.Language.Composition lqCCS.To_review.Prob_dist.Language.LTS lqCCS.To_review.Prob_dist.Characterisations.MustSupp lqCCS.To_review.Prob_dist.Characterisations.AlmostSure lqCCS.To_review.Prob_dist.Language.FwLTS lqCCS.To_review.Prob_dist.Testing.Observer.LTS lqCCS.To_review.Prob_dist.Testing.Observer.Tests lqCCS.To_review.Prob_dist.Testing.Observer.Interaction.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate

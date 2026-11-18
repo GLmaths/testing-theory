@@ -26,13 +26,13 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list numbers.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Testing.Scheduled.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Testing.Scheduled.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Observer_Predicates.
+  Context `{lqP : lqCCS_Parameters}.
 
 (* ** Tags with their kinds *)
 
@@ -41,8 +41,8 @@ Inductive okind : Type := KTau | KOut | KIn | KOp | KMeas | KInit | KRec.
 #[global] Instance okind_eq_dec : EqDecision okind.
 Proof. solve_decision. Defined.
 
-Definition prefix_tagged (𝜆 : prefix) : tag * okind :=
-  match 𝜆 with
+Definition prefix_tagged (π : prefix) : tag * okind :=
+  match π with
   | t ∶ 𝛕 => (t, KTau)
   | t ∶ _ ? => (t, KIn)
   | POp t _ _ => (t, KOp)
@@ -50,7 +50,7 @@ Definition prefix_tagged (𝜆 : prefix) : tag * okind :=
   | PReinit t _ => (t, KInit)
   end.
 
-Fixpoint tagged (P : proc) : list (tag * okind) :=
+Fixpoint tagged (P : prog) : list (tag * okind) :=
   match P with
   | PSend t _ _ => [(t, KOut)]
   | If _ Then P Else Q | P ∥ Q => tagged P ++ tagged Q
@@ -62,15 +62,15 @@ Fixpoint tagged (P : proc) : list (tag * okind) :=
 with gtagged (g : guard) : list (tag * okind) :=
   match g with
   | 𝟘{_} | 𝟙 => []
-  | 𝜆 ∙ P => prefix_tagged 𝜆 :: tagged P
+  | π ∙ P => prefix_tagged π :: tagged P
   | (g1 + g2)%lq => gtagged g1 ++ gtagged g2
   end.
 
-Definition tags (P : proc) : list tag := map fst (tagged P).
+Definition tags (P : prog) : list tag := map fst (tagged P).
 
 (* ** The class of observers *)
 
-Fixpoint obsb (T : proc) : bool :=
+Fixpoint obsb (T : prog) : bool :=
   match T with
   | PSend _ _ _ => true
   | If _ Then P Else Q | P ∥ Q => obsb P && obsb Q
@@ -85,7 +85,7 @@ with gobsb (g : guard) : bool :=
   | (g1 + g2)%lq => gobsb g1 && gobsb g2 && negb (gsuccessb g1 || gsuccessb g2)
   end.
 
-Fixpoint out_chans (T : proc) : list channel :=
+Fixpoint out_chans (T : prog) : list channel :=
   match T with
   | PSend _ c _ => [c]
   | If _ Then P Else Q | P ∥ Q => out_chans P ++ out_chans Q
@@ -100,7 +100,7 @@ with gout_chans (g : guard) : list channel :=
   | (g1 + g2)%lq => gout_chans g1 ++ gout_chans g2
   end.
 
-Fixpoint in_chans (T : proc) : list channel :=
+Fixpoint in_chans (T : prog) : list channel :=
   match T with
   | PSend _ _ _ | PVar _ => []
   | If _ Then P Else Q | P ∥ Q => in_chans P ++ in_chans Q
@@ -115,13 +115,13 @@ with gin_chans (g : guard) : list channel :=
   | (g1 + g2)%lq => gin_chans g1 ++ gin_chans g2
   end.
 
-Definition chan_disjoint (T : proc) : Prop := ∀ c, c ∈ out_chans T → c ∉ in_chans T.
+Definition chan_disjoint (T : prog) : Prop := ∀ c, c ∈ out_chans T → c ∉ in_chans T.
 
-Definition obs (T : proc) : Prop := obsb T = true ∧ chan_disjoint T.
+Definition obs (T : prog) : Prop := obsb T = true ∧ chan_disjoint T.
 
 (* ** Recursive observers *)
 
-Fixpoint obsrb (T : proc) : bool :=
+Fixpoint obsrb (T : prog) : bool :=
   match T with
   | PSend _ _ _ | PVar _ => true
   | If _ Then P Else Q | P ∥ Q => obsrb P && obsrb Q
@@ -137,8 +137,8 @@ with gobsrb (g : guard) : bool :=
   | (g1 + g2)%lq => gobsrb g1 && gobsrb g2 && negb (gsuccessb g1 || gsuccessb g2)
   end.
 
-Definition obsr (T : proc) : Prop := obsrb T = true ∧ chan_disjoint T.
+Definition obsr (T : prog) : Prop := obsrb T = true ∧ chan_disjoint T.
 
-End LqP.
+End Observer_Predicates.
 
 (* end hide *)

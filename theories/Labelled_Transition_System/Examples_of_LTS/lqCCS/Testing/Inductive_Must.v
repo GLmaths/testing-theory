@@ -25,23 +25,23 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical pMust_inductive.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Inductive_Must.
+  Context `{lqP : lqCCS_Parameters}.
 
 Theorem ctx_pre_pmust `{QM : QuantumModel} (W_total : ∀ a b : W, W_le a b ∨ W_le b a) (DC : dep_choice)
-    (Ts : proc → Prop) (p q : proc * St) :
+    (Ts : prog → Prop) (p q : prog * St) :
   ctx_pre_sm_on Stay Ts p q ↔ ∀ T, Ts T → pmust_pre (compose p T) (compose q T).
 Proof.
-  assert (Hfin : ∀ D : dist (proc * proc), fin (rstep lq_SchedSts D)).
+  assert (Hfin : ∀ D : dist (prog * prog), fin (rstep lq_SchedSts D)).
   { apply rstep_fin. intros ρ c.
-    apply (fin_mono _ (λ Δ, ∃ Δ0, (∃ s, sched_step ρ (par_of c) s Δ0) ∧ dmap par_of Δ = Δ0)).
-    - intros Δ (s & Hs). exists (dmap par_of Δ). split; [by exists s|done].
+    apply (fin_mono _ (λ Δ, ∃ Δ0, (∃ k, sched_step ρ (par_of c) k Δ0) ∧ dmap par_of Δ = Δ0)).
+    - intros Δ (k & Hs). exists (dmap par_of Δ). split; [by exists k|done].
     - apply (fin_bind _ _ (sched_fin ρ (par_of c))). intros Δ0 _. apply fin_uniq.
       intros x y <-. revert y. induction x as [|[[P1 T1] ρ1] x IH]; intros [|[[P2 T2] ρ2] y] E; try done.
       simpl in E. injection E as -> -> -> E. f_equal. by apply IH. }
@@ -51,6 +51,6 @@ Proof.
   - apply (smyth_pmust (SS := lq_SchedSts) Wt Hfin DC). exact (Hc T HT).
 Qed.
 
-End LqP.
+End Inductive_Must.
 
 (* end hide *)

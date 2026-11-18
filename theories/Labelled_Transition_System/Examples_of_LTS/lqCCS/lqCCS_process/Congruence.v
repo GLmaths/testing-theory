@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,22 +19,21 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
-(* * lqCCS: the congruence of processes [⟨ρ, P⟩], equality on the memory and
+
+(* * The congruence of lqCCS processes [⟨ρ, P⟩], equality on the memory and
     structural congruence on the program *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base relations.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Congruence.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Congruence.
 From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.lqCCS_prog.Congruence.
 
 #[local] Open Scope lqccs_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters} `{SA : StAlg}.
+Section Process_Congruence.
+  Context `{lqP : lqCCS_Parameters} `{SA : StAlg}.
 
-  Definition conf_cgr : relation (St * proc) := λ c c', c.1 ≡ₘ c'.1 ∧ c.2 ≡* c'.2.
+  Definition conf_cgr : relation (St * prog) := λ c c', c.1 ≡ₘ c'.1 ∧ c.2 ≡* c'.2.
 
   #[global] Instance conf_cgr_equivalence : Equivalence conf_cgr.
   Proof.
@@ -44,9 +42,8 @@ Section LqP.
     - intros c c' [Hm Hp]. split; by symmetry.
     - intros c c' c'' [Hm Hp] [Hm' Hp']. split; by etrans.
   Qed.
-End LqP.
+End Process_Congruence.
 
+Notation "c ≡ᶜ* c'" := (conf_cgr c c') (at level 70) : lqccs_scope.
 Notation "⟨ ρ , P ⟩ ≡* ⟨ ρ' , P' ⟩" := (conf_cgr (ρ, P) (ρ', P'))
   (at level 70, format "⟨ ρ ,  P ⟩  ≡*  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
-
-(* end hide *)

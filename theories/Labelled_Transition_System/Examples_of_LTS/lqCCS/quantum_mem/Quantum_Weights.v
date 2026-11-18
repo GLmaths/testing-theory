@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,11 +19,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
+
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra pMust_almost_sure lqCCS.quantum_mem.Syntax.
+From TestingTheory Require Import lqCCS.General_definition.Algebra pMust_almost_sure lqCCS.quantum_mem.Syntax.
 
 (* ** Weights of the probabilistic must (distribution semantics)
 
@@ -44,4 +42,3 @@ From TestingTheory Require Import lqCCS.quantum_mem.Algebra pMust_almost_sure lq
   weight_add_zero := sadd_szero_l;
   mass := tr;
 |}.
-(* end hide *)

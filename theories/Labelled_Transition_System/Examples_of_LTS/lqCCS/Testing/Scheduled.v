@@ -44,8 +44,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.lqCCS_prog.Congruence lqCCS.Harmony_Lemma.Memory_Harmony.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.lqCCS_prog.Congruence lqCCS.lqCCS_process.Memory_Harmony.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -53,8 +53,8 @@ From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitut
 (* ** Success: [𝟙] at top level, through parallel composition, restriction,
     evaluated conditionals and sums *)
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Scheduled.
+  Context `{lqP : lqCCS_Parameters}.
 
 Fixpoint gsuccessb (g : guard) : bool :=
   match g with
@@ -63,7 +63,7 @@ Fixpoint gsuccessb (g : guard) : bool :=
   | _ => false
   end.
 
-Fixpoint successb (P : proc) : bool :=
+Fixpoint successb (P : prog) : bool :=
   match P with
   | PG g => gsuccessb g
   | P ∥ Q => successb P || successb Q
@@ -77,14 +77,14 @@ Fixpoint successb (P : proc) : bool :=
   | _ => false
   end.
 
-Definition success (P : proc) : Prop := successb P = true.
+Definition success (P : prog) : Prop := successb P = true.
 
 #[global] Instance success_dec P : Decision (success P).
 Proof. unfold success. apply _. Qed.
 
 (* ** Tests without [τ] *)
 
-Fixpoint tau_freeb (P : proc) : bool :=
+Fixpoint tau_freeb (P : prog) : bool :=
   match P with
   | PSend _ _ _ | PVar _ => true
   | If _ Then P Else Q | P ∥ Q => tau_freeb P && tau_freeb Q
@@ -99,75 +99,75 @@ with gtau_freeb (g : guard) : bool :=
   | (g1 + g2)%lq => gtau_freeb g1 && gtau_freeb g2
   end.
 
-Definition tau_free (T : proc) : Prop := tau_freeb T = true.
+Definition tau_free (T : prog) : Prop := tau_freeb T = true.
 
 Section Sched.
   Context `{QM : QuantumModel}.
 
   (* ** The scheduled step of a tested program
 
-      [ρ • R —s→ Δ]: the silent steps of [⟨ρ, R⟩] with choice [s], the
+      [ρ • R —k→ Δ]: the silent steps of [⟨ρ, R⟩] with choice [k], the
       outcomes of a measurement grouped. *)
 
-  Inductive sched_step (ρ : St) (R : proc) (s : choice) : dist proc → Prop :=
-  | ss_tau R' : R ⟶ₚ{τ}[s] R' → sched_step ρ R s [(R', ρ)]
+  Inductive sched_step (ρ : St) (R : prog) (k : choice) : dist prog → Prop :=
+  | ss_tau R' : R ⟶ₚ{τ}[k] R' → sched_step ρ R k [(R', ρ)]
   | ss_op U qs R' :
-      R ⟶ₚ{⦅qs⦆ ! U}[s] R' → sched_step ρ R s [(R', sop_apply U qs ρ)]
+      R ⟶ₚ{⦅qs⦆ ! U}[k] R' → sched_step ρ R k [(R', sop_apply U qs ρ)]
   | ss_init qs R' :
-      R ⟶ₚ{reinit qs}[s] R' → sched_step ρ R s [(R', init_apply qs ρ)]
-  | ss_meas M qs (Rs : list proc) R0 :
-      R ⟶ₚ{M ⦅qs⦆? 0}[s] R0 →
-      Forall2 (λ k R', R ⟶ₚ{M ⦅qs⦆? k}[s] R') (outs_nz (meas_of M qs) ρ) Rs →
-      sched_step ρ R s (zip_with (λ k R', (R', M ⦅qs⦆[k] · ρ)) (outs_nz (meas_of M qs) ρ) Rs).
+      R ⟶ₚ{reinit qs}[k] R' → sched_step ρ R k [(R', init_apply qs ρ)]
+  | ss_meas M qs (Rs : list prog) R0 :
+      R ⟶ₚ{M ⦅qs⦆? 0}[k] R0 →
+      Forall2 (λ n R', R ⟶ₚ{M ⦅qs⦆? n}[k] R') (outs_nz (meas_of M qs) ρ) Rs →
+      sched_step ρ R k (zip_with (λ n R', (R', M ⦅qs⦆[n] · ρ)) (outs_nz (meas_of M qs) ρ) Rs).
 
-  Definition par_of (c : proc * proc) : proc := c.1 ∥ c.2.
+  Definition par_of (c : prog * prog) : prog := c.1 ∥ c.2.
 
-  Definition conf_sched (ρ : St) (c : proc * proc) (s : choice) (Δ : dist (proc * proc)) : Prop :=
-    sched_step ρ (par_of c) s (dmap par_of Δ).
+  Definition conf_sched (ρ : St) (c : prog * prog) (k : choice) (Δ : dist (prog * prog)) : Prop :=
+    sched_step ρ (par_of c) k (dmap par_of Δ).
 
-  #[global] Instance lq_SchedSts : SchedSts (proc * proc) choice :=
+  #[global] Instance lq_SchedSts : SchedSts (prog * prog) choice :=
     {| pMust_scheduled.sstep := conf_sched; psuccess := λ c, success c.2 |}.
 
-  Definition compose (Pρ : proc * St) (T : proc) : dist (proc * proc) := [((Pρ.1, T), Pρ.2)].
+  Definition compose (Pρ : prog * St) (T : prog) : dist (prog * prog) := [((Pρ.1, T), Pρ.2)].
 
-  #[global] Instance lq_pTesting : pTesting (proc * St) proc (proc * proc) choice :=
+  #[global] Instance lq_pTesting : pTesting (prog * St) prog (prog * prog) choice :=
     {| pMust_scheduled.compose := compose |}.
 
   (* ** The steps of a component are the silent steps of the configuration *)
 
-  Lemma sched_step_conf ρ R s Δ R' ρ' :
-    sched_step ρ R s Δ → (R', ρ') ∈ Δ → ⟨ρ, R⟩ ⟶{τ}[s] ⟨ρ', R'⟩.
+  Lemma sched_step_conf ρ R k Δ R' ρ' :
+    sched_step ρ R k Δ → (R', ρ') ∈ Δ → ⟨ρ, R⟩ ⟶{τ}[k] ⟨ρ', R'⟩.
   Proof.
     intros Hs Hin. inversion Hs as [? Hp|U qs ? Hp|qs ? Hp|M qs Rs R0 Hp0 Hf]; subst.
-    - apply list_elem_of_singleton in Hin. simplify_eq. by apply prog_step_conf.
+    - apply list_elem_of_singleton in Hin. simplify_eq. exact (prog_step_conf _ _ _ _ _ Hp).
     - apply list_elem_of_singleton in Hin. simplify_eq.
       eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ (sop_act U qs))|constructor].
     - apply list_elem_of_singleton in Hin. simplify_eq.
       eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ (init_act qs))|constructor].
-    - assert (Hks : ∀ k, k ∈ outs_nz (meas_of M qs) ρ → k ∈ outs (meas_of M qs))
-        by (intros k Hk; by apply outs_nz_spec in Hk as [? _]).
-      remember (outs_nz (meas_of M qs) ρ) as ks eqn:Eks. clear Eks Hs.
-      clear Hp0. revert Hin Hks. induction Hf as [|k R1 ks Rs Hp _ IH]; simpl; intros Hin Hks; [by apply elem_of_nil in Hin|].
-      apply elem_of_cons in Hin as [Hin|Hin]; [|apply IH; [done|intros k' Hk'; apply Hks; by right]]. simplify_eq.
+    - assert (Hks : ∀ n, n ∈ outs_nz (meas_of M qs) ρ → n ∈ outs (meas_of M qs))
+        by (intros n Hk; by apply outs_nz_spec in Hk as [? _]).
+      remember (outs_nz (meas_of M qs) ρ) as ns eqn:Eks. clear Eks Hs.
+      clear Hp0. revert Hin Hks. induction Hf as [|n R1 ns Rs Hp _ IH]; simpl; intros Hin Hks; [by apply elem_of_nil in Hin|].
+      apply elem_of_cons in Hin as [Hin|Hin]; [|apply IH; [done|intros n' Hk'; apply Hks; by right]]. simplify_eq.
       eapply prog_step_mem_conf; [exact Hp|apply me_meas, Hks; by left|constructor].
   Qed.
 
-  Lemma prog_gstep_meas_any g s M qs n R' :
-    g ⟶ᵍ{M ⦅qs⦆? n}[s] R' →
-    ∀ n', ∃ R'', g ⟶ᵍ{M ⦅qs⦆? n'}[s] R''.
+  Lemma prog_gstep_meas_any g k M qs n R' :
+    g ⟶ᵍ{M ⦅qs⦆? n}[k] R' →
+    ∀ n', ∃ R'', g ⟶ᵍ{M ⦅qs⦆? n'}[k] R''.
   Proof.
-    intros Hp. remember (M ⦅qs⦆? n) as l eqn:El. revert El.
+    intros Hp. remember (M ⦅qs⦆? n) as 𝜆 eqn:El. revert El.
     induction Hp; intros El n'; simplify_eq;
       try (edestruct IHHp as (R'' & HR''); [done|]; eexists; by econstructor).
     eexists. by apply pg_meas.
   Qed.
 
-  Lemma prog_step_meas_any R s M qs n R' :
-    R ⟶ₚ{M ⦅qs⦆? n}[s] R' →
-    ∀ n', ∃ R'', R ⟶ₚ{M ⦅qs⦆? n'}[s] R''.
+  Lemma prog_step_meas_any R k M qs n R' :
+    R ⟶ₚ{M ⦅qs⦆? n}[k] R' →
+    ∀ n', ∃ R'', R ⟶ₚ{M ⦅qs⦆? n'}[k] R''.
   Proof.
-    intros Hp. remember (M ⦅qs⦆? n) as l eqn:El. revert El.
-    induction Hp as [g s l P' Hg| | | | | | | | |]; intros El n'; simplify_eq;
+    intros Hp. remember (M ⦅qs⦆? n) as 𝜆 eqn:El. revert El.
+    induction Hp as [g k 𝜆 P' Hg| | | | | | | | |]; intros El n'; simplify_eq;
       try (edestruct IHHp as (R'' & HR''); [done|]; eexists; by econstructor).
     destruct (prog_gstep_meas_any _ _ _ _ _ _ Hg n') as (R'' & HR''). eexists. by apply pr_guard.
   Qed.
@@ -177,28 +177,28 @@ Section Sched.
     n ∈ outs (meas_of M qs) ∧ ρ' = M ⦅qs⦆[n] · ρ.
   Proof. by inversion 1; subst. Qed.
 
-  Lemma conf_sched_step ρ R s ρ' R' :
-    ⟨ρ, R⟩ ⟶{τ}[s] ⟨ρ', R'⟩ → ρ' ≠ szero → ∃ Δ, sched_step ρ R s Δ ∧ (R', ρ') ∈ Δ.
+  Lemma conf_sched_step ρ R k ρ' R' :
+    ⟨ρ, R⟩ ⟶{τ}[k] ⟨ρ', R'⟩ → ρ' ≠ szero → ∃ Δ, sched_step ρ R k Δ ∧ (R', ρ') ∈ Δ.
   Proof.
-    intros Hc Hnz. destruct (conf_step_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hsy)];
+    intros Hc Hnz. destruct (conf_step_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(μ2 & μ1 & Hp & Hm & Hsy)];
       [|destruct (prog_step_ext_choice _ _ _ _ Hp) as (t & ->)].
     - eexists. split; [by apply ss_tau|]. by apply list_elem_of_singleton.
     - inversion Hsy; subst.
       + inversion Hm; subst. eexists. split; [by apply ss_op|]. by apply list_elem_of_singleton.
-      + rename n into k. destruct (mem_step_meas_inv _ _ _ _ _ Hm) as (Hko & ->).
-        assert (Hall : ∀ ks : list (nat),
-          ∃ Rs, Forall2 (λ k R'', R ⟶ₚ{M ⦅qs⦆? k}[{[+ t +]}] R'') ks Rs
-                ∧ (k ∈ ks → (R', M ⦅qs⦆[k] · ρ) ∈ zip_with (λ k R'', (R'', M ⦅qs⦆[k] · ρ)) ks Rs)).
-        { intros ks. induction ks as [|k' ks (Rs & Hf & Hin)].
+      + destruct (mem_step_meas_inv _ _ _ _ _ Hm) as (Hko & ->).
+        assert (Hall : ∀ ns : list (nat),
+          ∃ Rs, Forall2 (λ n R'', R ⟶ₚ{M ⦅qs⦆? n}[{[+ t +]}] R'') ns Rs
+                ∧ (n ∈ ns → (R', M ⦅qs⦆[n] · ρ) ∈ zip_with (λ n R'', (R'', M ⦅qs⦆[n] · ρ)) ns Rs)).
+        { intros ns. induction ns as [|n' ns (Rs & Hf & Hin)].
           - exists []. split; [constructor|]. by intros ?%elem_of_nil.
-          - destruct (decide (k' = k)) as [Hk|Hne].
-            + subst k'.
+          - destruct (decide (n' = n)) as [Hk|Hne].
+            + subst n'.
               exists (R' :: Rs). split; [by constructor|]. intros _. simpl. by left.
-            + destruct (prog_step_meas_any _ _ _ _ _ _ Hp k') as (R'' & HR'').
+            + destruct (prog_step_meas_any _ _ _ _ _ _ Hp n') as (R'' & HR'').
               exists (R'' :: Rs). split; [by constructor|].
               intros [->|Hk]%elem_of_cons; [by destruct Hne|]. simpl. right. by apply Hin. }
         destruct (Hall (outs_nz (meas_of M qs) ρ)) as (Rs & Hf & Hin).
-        exists (zip_with (λ k R'', (R'', M ⦅qs⦆[k] · ρ)) (outs_nz (meas_of M qs) ρ) Rs).
+        exists (zip_with (λ n R'', (R'', M ⦅qs⦆[n] · ρ)) (outs_nz (meas_of M qs) ρ) Rs).
         split; [|by apply Hin, outs_nz_spec].
         destruct (prog_step_meas_any _ _ _ _ _ _ Hp 0) as (R0 & HR0). by apply (ss_meas _ _ _ M qs Rs R0).
       + inversion Hm; subst. eexists. split; [by apply ss_init|]. by apply list_elem_of_singleton.
@@ -206,48 +206,48 @@ Section Sched.
 
   (* ** Non-zero weights are preserved *)
 
-  Lemma sched_step_nonzero ρ R s Δ :
-    ρ ≠ szero → sched_step ρ R s Δ → ∀ R' ρ', (R', ρ') ∈ Δ → ρ' ≠ szero.
+  Lemma sched_step_nonzero ρ R k Δ :
+    ρ ≠ szero → sched_step ρ R k Δ → ∀ R' ρ', (R', ρ') ∈ Δ → ρ' ≠ szero.
   Proof.
     intros Hρ Hs R' ρ' Hin. inversion Hs as [? Hp|U qs ? Hp|qs ? Hp|M qs Rs R0 Hp0 Hf]; subst.
     - apply list_elem_of_singleton in Hin. by simplify_eq.
     - apply list_elem_of_singleton in Hin. simplify_eq. by apply sop_apply_nonzero.
     - apply list_elem_of_singleton in Hin. simplify_eq. by apply init_apply_nonzero.
-    - clear Hs Hp0. assert (Hks : ∀ k, k ∈ outs_nz (meas_of M qs) ρ → M ⦅qs⦆[k] · ρ ≠ szero)
-        by (intros k Hk; exact (proj2 (proj1 (outs_nz_spec (meas_of M qs) ρ k) Hk))).
+    - clear Hs Hp0. assert (Hks : ∀ n, n ∈ outs_nz (meas_of M qs) ρ → M ⦅qs⦆[n] · ρ ≠ szero)
+        by (intros n Hk; exact (proj2 (proj1 (outs_nz_spec (meas_of M qs) ρ n) Hk))).
       remember (outs_nz (meas_of M qs) ρ) as ks0 eqn:Eks. clear Eks. revert Hin Hks.
-      induction Hf as [|k R1 ks Rs Hp _ IH]; simpl; intros Hin Hks; [by apply elem_of_nil in Hin|].
+      induction Hf as [|n R1 ns Rs Hp _ IH]; simpl; intros Hin Hks; [by apply elem_of_nil in Hin|].
       apply elem_of_cons in Hin as [Hin|Hin].
       + simplify_eq. apply Hks. by left.
-      + apply IH; [done|]. intros k' Hk'. apply Hks. by right.
+      + apply IH; [done|]. intros n' Hk'. apply Hks. by right.
   Qed.
 
-  Lemma sched_step_nonempty ρ R s Δ : ρ ≠ szero → sched_step ρ R s Δ → Δ ≠ [].
+  Lemma sched_step_nonempty ρ R k Δ : ρ ≠ szero → sched_step ρ R k Δ → Δ ≠ [].
   Proof.
     intros Hρ Hs. inversion Hs as [? Hp|U qs ? Hp|qs ? Hp|M qs Rs R0 Hp0 Hf]; subst; try done.
     intros U. pose proof (outs_nz_nonempty M qs ρ Hρ) as Hne.
     destruct (outs_nz (meas_of M qs) ρ); [done|]. inversion Hf; subst. done.
   Qed.
 
-  Inductive vis_step (ρ : St) (P : proc) :
-      choice → Labels prog_action + mem_action →
-      list ((Labels prog_action + mem_action) * (proc * St)) → Prop :=
-  | vs_prog (t : tag) a P' :
-      P ⟶ₚ{ActExt a}[{[+ t +]}] P' →
-      vis_step ρ P {[+ t +]} (inl (ActExt a)) [(inl (ActExt a), (P', ρ))]
+  Inductive vis_step (ρ : St) (P : prog) :
+      choice → Labels (mem_action + prog_action) →
+      list (Labels (mem_action + prog_action) * (prog * St)) → Prop :=
+  | vs_prog (t : tag) (μ : prog_action) P' :
+      P ⟶ₚ{ActExt μ}[{[+ t +]}] P' →
+      vis_step ρ P {[+ t +]} (ActExt μ) [(ActExt (plbl μ), (P', ρ))]
   | vs_sop (ℰ : Act) :
-      vis_step ρ P ∅ (inr (? ℰ)) [(inr (? ℰ), (P, ℰ · ρ))]
+      vis_step ρ P ∅ (ActExt (? ℰ)) [(ActExt (mlbl (? ℰ)), (P, ℰ · ρ))]
   | vs_meas ℳ :
-      vis_step ρ P ∅ (inr (ℳ !ₘ 0))
-        (map (λ k, (inr (ℳ !ₘ k), (P, ℳ ·[k] ρ))) (outs_nz ℳ ρ)).
+      vis_step ρ P ∅ (ActExt (ℳ !ₘ 0))
+        (map (λ n, (ActExt (mlbl (ℳ !ₘ n)), (P, ℳ ·[n] ρ))) (outs_nz ℳ ρ)).
 
-  Lemma vis_step_conf ρ P s l Λ x :
-    vis_step ρ P s l Λ → x ∈ Λ → conf_step ρ P s x.1 x.2.2 x.2.1.
+  Lemma vis_step_conf ρ P k 𝜆 Λ x :
+    vis_step ρ P k 𝜆 Λ → x ∈ Λ → ⟨ρ, P⟩ ⟶{x.1}[k] ⟨x.2.2, x.2.1⟩.
   Proof.
-    intros Hv Hx. inversion Hv as [t a P' Hp|ℰ|ℳ]; subst.
-    - apply list_elem_of_singleton in Hx. subst x. by apply prog_step_conf.
+    intros Hv Hx. inversion Hv as [t μ P' Hp|ℰ|ℳ]; subst.
+    - apply list_elem_of_singleton in Hx. subst x. exact (prog_step_conf _ _ _ _ _ Hp).
     - apply list_elem_of_singleton in Hx. subst x. apply co_mem_sop.
-    - apply list_elem_of_fmap in Hx as (k & -> & Hk). apply co_mem_meas. by apply outs_nz_spec in Hk as [? _].
+    - apply list_elem_of_fmap in Hx as (n & -> & Hk). apply co_mem_meas. by apply outs_nz_spec in Hk as [? _].
   Qed.
 End Sched.
 
@@ -259,13 +259,13 @@ End Sched.
 Section Bottom.
   Context `{QM : QuantumModel}.
 
-  Definition Omega (t : tag) : proc := t ∶ rec ∙ PVar 0.
+  Definition Omega (t : tag) : prog := t ∶ rec ∙ PVar 0.
 
   Lemma Omega_step t : (Omega t) ⟶ₚ{τ}[{[+ t +]}] (Omega (tag_up t)).
   Proof. exact (pr_rec t (PVar 0)). Qed.
 
-  Definition Omega_run_of (t : tag) (T : proc) (ρ : St) (i : nat) : dist (proc * proc) :=
-    [((Omega (if decide (success T) then t else Nat.iter i tag_up t), T), ρ)].
+  Definition Omega_run_of (t : tag) (T : prog) (ρ : St) (n : nat) : dist (prog * prog) :=
+    [((Omega (if decide (success T) then t else Nat.iter n tag_up t), T), ρ)].
 
   Lemma Omega_run L t T ρ : is_run L [((Omega t, T), ρ)] (Omega_run_of t T ρ).
   Proof.
@@ -280,7 +280,7 @@ Section Bottom.
         apply ss_tau. by apply pr_parL, Omega_step.
   Qed.
 
-  Theorem Omega_bottom L t (Q : proc) (ρ : St) : ctx_pre_sm L (Omega t, ρ) (Q, ρ).
+  Theorem Omega_bottom L t (Q : prog) (ρ : St) : ctx_pre_sm L (Omega t, ρ) (Q, ρ).
   Proof.
     intros T r Hr. exists (Omega_run_of t T ρ). split; [apply Omega_run|].
     intros n w Hw. unfold succ_mass, Omega_run_of in *. simpl in Hw.
@@ -291,6 +291,6 @@ Section Bottom.
   Qed.
 End Bottom.
 
-End LqP.
+End Scheduled.
 
 (* end hide *)

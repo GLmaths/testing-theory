@@ -30,14 +30,14 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Trace_Convergence.
+  Context `{lqP : lqCCS_Parameters}.
 
 Section SN.
   Context `{Weights} {C Sch : Type} (SS : SchedSts C Sch) (μ : C → nat) (Inv : C → Prop).
@@ -117,7 +117,7 @@ Section SN.
   Qed.
 End SN.
 
-Fixpoint sz (P : proc) : nat :=
+Fixpoint sz (P : prog) : nat :=
   match P with
   | PSend _ _ _ => 1
   | If _ Then P Else Q | P ∥ Q => sz P + sz Q
@@ -128,11 +128,11 @@ Fixpoint sz (P : proc) : nat :=
 with gsz (g : guard) : nat :=
   match g with
   | 𝟘{_} | 𝟙 => 0
-  | 𝜆 ∙ P => Datatypes.S (sz P)
+  | π ∙ P => Datatypes.S (sz P)
   | (g1 + g2)%lq => gsz g1 + gsz g2
   end.
 
-Fixpoint norec (P : proc) : bool :=
+Fixpoint norec (P : prog) : bool :=
   match P with
   | PSend _ _ _ | PVar _ => true
   | If _ Then P Else Q | P ∥ Q => norec P && norec Q
@@ -143,26 +143,26 @@ Fixpoint norec (P : proc) : bool :=
 with gnorec (g : guard) : bool :=
   match g with
   | 𝟘{_} | 𝟙 => true
-  | 𝜆 ∙ P => norec P
+  | π ∙ P => norec P
   | (g1 + g2)%lq => gnorec g1 && gnorec g2
   end.
 
-Lemma sz_subst : (∀ P k v, sz (P ⁅ v // k ⁆ᵥ) = sz P) ∧ (∀ g k v, gsz (gsubst k v g) = gsz g).
-Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
+Lemma sz_subst : (∀ P i v, sz (P ⁅ v // i ⁆ᵥ) = sz P) ∧ (∀ g i v, gsz (gsubst i v g) = gsz g).
+Proof. apply prog_guard_ind; simpl; intros; congruence. Qed.
 
-Lemma norec_subst : (∀ P k v, norec (P ⁅ v // k ⁆ᵥ) = norec P) ∧ (∀ g k v, gnorec (gsubst k v g) = gnorec g).
-Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
+Lemma norec_subst : (∀ P i v, norec (P ⁅ v // i ⁆ᵥ) = norec P) ∧ (∀ g i v, gnorec (gsubst i v g) = gnorec g).
+Proof. apply prog_guard_ind; simpl; intros; congruence. Qed.
 
 Lemma obs_norec : (∀ P, obsb P = true → norec P = true) ∧ (∀ g, gobsb g = true → gnorec g = true).
 Proof.
-  apply proc_guard_ind; simpl; try done.
+  apply prog_guard_ind; simpl; try done.
   - intros e P IHP Q IHQ [Hp Hq]%andb_prop. by rewrite IHP, IHQ.
   - intros P IHP Q IHQ [Hp Hq]%andb_prop. by rewrite IHP, IHQ.
-  - intros 𝜆 P IHP Hob. destruct 𝜆; try done; by apply IHP.
+  - intros π P IHP Hob. destruct π; try done; by apply IHP.
   - intros g1 IH1 g2 IH2 [[Hg1 Hg2]%andb_prop _]%andb_prop. by rewrite IH1, IH2.
 Qed.
 
-Lemma gstep_sz g s l P' : gnorec g = true → g ⟶ᵍ{l}[s] P' → sz P' < gsz g ∧ norec P' = true.
+Lemma gstep_sz g k 𝜆 P' : gnorec g = true → g ⟶ᵍ{𝜆}[k] P' → sz P' < gsz g ∧ norec P' = true.
 Proof.
   intros Hn Hs. revert Hn. induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs]; simpl; intros Hn;
     rewrite ?(proj1 sz_subst), ?(proj1 norec_subst); try (split; [lia|done]).
@@ -170,7 +170,7 @@ Proof.
   - apply andb_prop in Hn as [Hn1 Hn2]. destruct (IHHs Hn2). split; [lia|done].
 Qed.
 
-Lemma step_sz P s l P' : norec P = true → P ⟶ₚ{l}[s] P' → sz P' < sz P ∧ norec P' = true.
+Lemma step_sz P k 𝜆 P' : norec P = true → P ⟶ₚ{𝜆}[k] P' → sz P' < sz P ∧ norec P' = true.
 Proof.
   intros Hn Hs. revert Hn. induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; simpl; intros Hn.
   - by eapply gstep_sz.
@@ -187,37 +187,37 @@ Proof.
   - discriminate Hn.
 Qed.
 
-Lemma zip_elem {A B X} (R : A → B → Prop) (f : A → B → X) (l : list A) (k : list B) x :
-  Forall2 R l k → x ∈ zip_with f l k → ∃ a b, a ∈ l ∧ R a b ∧ x = f a b.
+Lemma zip_elem {A B X} (R : A → B → Prop) (f : A → B → X) (l : list A) (l' : list B) x :
+  Forall2 R l l' → x ∈ zip_with f l l' → ∃ a b, a ∈ l ∧ R a b ∧ x = f a b.
 Proof.
-  induction 1 as [|a b l k Hab _ IH]; simpl; intros Hx; [by apply elem_of_nil in Hx|].
+  induction 1 as [|a b l l' Hab _ IH]; simpl; intros Hx; [by apply elem_of_nil in Hx|].
   apply elem_of_cons in Hx as [->|Hx]; [exists a, b; split; [by left|done]|].
   destruct (IH Hx) as (a' & b' & Ha' & Hr & ->). exists a', b'. split; [by right|done].
 Qed.
 
-Lemma sched_sz `{QM : QuantumModel} ρ P s (Δ : list (proc * St)) :
-  norec P = true → sched_step ρ P s Δ → ∀ x : proc * St, x ∈ Δ → sz x.1 < sz P ∧ norec x.1 = true.
+Lemma sched_sz `{QM : QuantumModel} ρ P k (Δ : list (prog * St)) :
+  norec P = true → sched_step ρ P k Δ → ∀ x : prog * St, x ∈ Δ → sz x.1 < sz P ∧ norec x.1 = true.
 Proof.
   intros Hn Hs x Hx. inversion Hs as [R' Hp|U qs R' Hp|qs R' Hp|M qs Rs R0 Hp0 Hf]; subst.
   - apply list_elem_of_singleton in Hx. subst x. exact (step_sz _ _ _ _ Hn Hp).
   - apply list_elem_of_singleton in Hx. subst x. exact (step_sz _ _ _ _ Hn Hp).
   - apply list_elem_of_singleton in Hx. subst x. exact (step_sz _ _ _ _ Hn Hp).
-  - destruct (zip_elem _ _ _ _ x Hf Hx) as (k & R' & _ & Hp & ->). exact (step_sz _ _ _ _ Hn Hp).
+  - destruct (zip_elem _ _ _ _ x Hf Hx) as (n & R' & _ & Hp & ->). exact (step_sz _ _ _ _ Hn Hp).
 Qed.
 
-Lemma tnodes_sz T n X : norec T = true → X ∈ tnodes T n → sz X + length n ≤ sz T ∧ norec X = true.
+Lemma tnodes_sz T z X : norec T = true → X ∈ tnodes T z → sz X + length z ≤ sz T ∧ norec X = true.
 Proof.
-  intros HT. revert X. induction n as [|a n IH] using rev_ind; intros X HX.
+  intros HT. revert X. induction z as [|a z IH] using rev_ind; intros X HX.
   - rewrite tnodes_nil in HX. apply list_elem_of_singleton in HX. subst X. simpl. split; [lia|done].
   - apply tnodes_app_elem in HX as (X0 & HX0 & HX). destruct (IH X0 HX0) as [Hl Hr].
     pose proof (co_succ_step _ _ _ HX) as Hs; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' Hr']; rewrite length_app; simpl.
     all: split; [lia|done].
 Qed.
 
-Lemma menu_depth T n o : norec T = true → menu T n o → length n < sz T.
+Lemma menu_depth T z o : norec T = true → menu T z o → length z < sz T.
 Proof.
   intros HT (X & a & HX & _ & Hne). destruct (co_succ X a) as [|X' l] eqn:E; [done|].
-  destruct (tnodes_sz T n X HT HX) as [Hl Hr].
+  destruct (tnodes_sz T z X HT HX) as [Hl Hr].
   assert (HX' : X' ∈ co_succ X a) by (rewrite E; by left).
   pose proof (co_succ_step _ _ _ HX') as Hs; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' _]; lia.
 Qed.
@@ -227,20 +227,20 @@ Lemma cstep_measure `{QM : QuantumModel} T O ρ (c : comp) σ Δ :
   ∀ y, y ∈ Δ → sz y.1.2.1 + (sz T - length y.1.1) < sz c.2.1 + (sz T - length c.1) ∧ norec y.1.2.1 = true.
 Proof.
   intros HT Hc Hs y Hy.
-  apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                  |n P C k U' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
+  apply cstep_cases in Hs. inversion Hs as [z P C k Δ0 Hss|z P C t d v t' P' Hin HkC Hp|z P C t d v t' P' HI Hp
+                  |z P C t U' qs t' HI|z P C t q t' HI|z P C t M qs t' HI|z P C t t' HI]; subst; simpl in *.
   - apply list_elem_of_fmap in Hy as (x & -> & Hx). simpl.
-    destruct (sched_sz ρ P s Δ0 Hc Hss x Hx) as [Hl Hr]. split; [lia|done].
+    destruct (sched_sz ρ P k Δ0 Hc Hss x Hx) as [Hl Hr]. split; [lia|done].
   - apply list_elem_of_singleton in Hy. subst y. simpl. destruct (step_sz _ _ _ _ Hc Hp) as [Hl Hr]. split; [lia|done].
   - apply list_elem_of_singleton in Hy. subst y. simpl. destruct (step_sz _ _ _ _ Hc Hp) as [Hl Hr].
     rewrite length_app. simpl. split; [lia|done].
-  - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T n _ HT HI) as Hd.
+  - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T z _ HT HI) as Hd.
     rewrite length_app. simpl. split; [lia|done].
-  - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T n _ HT HI) as Hd.
+  - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T z _ HT HI) as Hd.
     rewrite length_app. simpl. split; [lia|done].
-  - apply list_elem_of_fmap in Hy as (x & -> & Hx). simpl. pose proof (menu_depth T n _ HT HI) as Hd.
+  - apply list_elem_of_fmap in Hy as (x & -> & Hx). simpl. pose proof (menu_depth T z _ HT HI) as Hd.
     rewrite length_app. simpl. split; [lia|done].
-  - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T n _ HT HI) as Hd.
+  - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T z _ HT HI) as Hd.
     rewrite length_app. simpl. split; [lia|done].
 Qed.
 
@@ -248,18 +248,18 @@ Lemma stable_fin `{QM : QuantumModel} O I S D (r : nat → dist comp) w N :
   run_word (M := lq_menu O) I S D r w → dstable (SchedSts0 := mdlts (M := lq_menu O) I S) (r N) →
   fin (visited r).
 Proof.
-  intros Hrun Hst. exists (concat (map (λ j, map (λ x : comp * St, x.1.1) (r j)) (seq 0 (Datatypes.S N)))).
-  intros n (i & c & ρ & Hin & <-).
-  assert (Hj : ∃ j, j ≤ N ∧ (c, ρ) ∈ r j).
-  { destruct (le_lt_dec i N) as [Hle|Hlt]; [by exists i|]. exists N. split; [lia|].
-    replace i with (N + (i - N)) in Hin by lia. by rewrite (stable_const O I S _ r w N Hrun Hst) in Hin. }
-  destruct Hj as (j & Hj & Hinj). apply list_elem_of_In, in_concat.
-  exists (map (λ x : comp * St, x.1.1) (r j)). split.
-  - apply in_map_iff. exists j. split; [done|]. apply in_seq. lia.
+  intros Hrun Hst. exists (concat (map (λ m, map (λ x : comp * St, x.1.1) (r m)) (seq 0 (Datatypes.S N)))).
+  intros z (n & c & ρ & Hin & <-).
+  assert (Hj : ∃ m, m ≤ N ∧ (c, ρ) ∈ r m).
+  { destruct (le_lt_dec n N) as [Hle|Hlt]; [by exists n|]. exists N. split; [lia|].
+    replace n with (N + (n - N)) in Hin by lia. by rewrite (stable_const O I S _ r w N Hrun Hst) in Hin. }
+  destruct Hj as (m & Hj & Hinj). apply list_elem_of_In, in_concat.
+  exists (map (λ x : comp * St, x.1.1) (r m)). split.
+  - apply in_map_iff. exists m. split; [done|]. apply in_seq. lia.
   - apply in_map_iff. exists (c, ρ). split; [done|]. by apply list_elem_of_In.
 Qed.
 
-Theorem norec_finitary `{QM : QuantumModel} (p q : proc * St) : norec q.1 = true → finitary p q.
+Theorem norec_finitary `{QM : QuantumModel} (p q : prog * St) : norec q.1 = true → finitary p q.
 Proof.
   intros Hq O Ch K I S r w ((T & HT & _ & -> & -> & _) & _) Hw.
   assert (HTn : norec T = true) by exact (proj1 obs_norec T (proj1 (proj1 (proj1 HT)))).
@@ -273,13 +273,13 @@ Proof.
   exact (stable_fin O (menu T) (S_T T) (dinit q) r w N Hw HN).
 Qed.
 
-Theorem trace_characterisation_norec `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) :
+Theorem trace_characterisation_norec `{QM : QuantumModel} (DC : dep_choice) (p q : prog * St) :
   q.2 ≠ szero → norec q.1 = true →
   (ctx_pre_sm_on Stay (obs_for p q) p q ↔ alt_trace p q).
 Proof.
   intros Hz Hn. exact (trace_characterisation DC p q Hz (norec_finitary p q Hn)).
 Qed.
 
-End LqP.
+End Trace_Convergence.
 
 (* end hide *)

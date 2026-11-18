@@ -52,14 +52,14 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.lqCCS_prog.Congruence.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.lqCCS_prog.Congruence.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Denotational.
+  Context `{lqP : lqCCS_Parameters}.
 
 Reserved Notation "⟦ P ⟧" (at level 0, format "⟦ P ⟧").
 Reserved Notation "⟦ P ⟧[ w ]" (at level 0, format "⟦ P ⟧[ w ]").
@@ -73,39 +73,39 @@ Section Den.
   | int_tau : internal τ
   | int_op U qs : internal (⦅qs⦆ ! U)
   | int_init q : internal (reinit q)
-  | int_meas M qs k : k ∈ outs (meas_of M qs) → internal (M ⦅qs⦆? k).
+  | int_meas M qs n : n ∈ outs (meas_of M qs) → internal (M ⦅qs⦆? n).
 
   (* No internal move: the program is finished (or deadlocked). *)
-  Definition stable (P : proc) : Prop := ∀ s l P', P ⟶ₚ{l}[s] P' → ¬ internal l.
+  Definition stable (P : prog) : Prop := ∀ k 𝜆 P', P ⟶ₚ{𝜆}[k] P' → ¬ internal 𝜆.
 
-  Definition enabled (P : proc) (s : choice) : Prop := ∃ l P', P ⟶ₚ{l}[s] P' ∧ internal l.
+  Definition enabled (P : prog) (k : choice) : Prop := ∃ 𝜆 P', P ⟶ₚ{𝜆}[k] P' ∧ internal 𝜆.
 
   (* [Σ_k F_k ⋅ M_k], the results [F_k] being listed as the outcomes. *)
   Definition meas_sum (M : meas) (qs : list qubit) (Fs : list T) : T :=
-    sum (zip_with (λ k F, F ⋅ kraus (meas_of M qs) k) (outs (meas_of M qs)) Fs).
+    sum (zip_with (λ n F, F ⋅ kraus (meas_of M qs) n) (outs (meas_of M qs)) Fs).
 
   (* ** The denotation under a word of choices *)
 
-  Inductive den : proc → list choice → T → Prop :=
+  Inductive den : prog → list choice → T → Prop :=
   | den_nil_stable P : stable P → ⟦P⟧[[]] one
   | den_nil_run P : ¬ stable P → ⟦P⟧[[]] zero
-  | den_stable P s w : stable P → ⟦P⟧[s :: w] one
-  | den_stay P s w F : ¬ stable P → ¬ enabled P s → ⟦P⟧[w] F → ⟦P⟧[s :: w] F
-  | den_tau P s w P' F : P ⟶ₚ{τ}[s] P' → ⟦P'⟧[w] F → ⟦P⟧[s :: w] F
+  | den_stable P k w : stable P → ⟦P⟧[k :: w] one
+  | den_stay P k w F : ¬ stable P → ¬ enabled P k → ⟦P⟧[w] F → ⟦P⟧[k :: w] F
+  | den_tau P k w P' F : P ⟶ₚ{τ}[k] P' → ⟦P'⟧[w] F → ⟦P⟧[k :: w] F
   | den_op P t w U qs P' F :
       P ⟶ₚ{⦅qs⦆ ! U}[{[+ t +]}] P' → ⟦P'⟧[w] F →
       ⟦P⟧[{[+ t +]} :: w] (F ⋅ act (sop_act U qs))
   | den_init P t w q P' F :
       P ⟶ₚ{reinit q}[{[+ t +]}] P' → ⟦P'⟧[w] F →
       ⟦P⟧[{[+ t +]} :: w] (F ⋅ act (init_act q))
-  | den_meas P t w M qs (PFs : list (proc * T)) :
-      Forall2 (λ k pf, P ⟶ₚ{M ⦅qs⦆? k}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2)
+  | den_meas P t w M qs (PFs : list (prog * T)) :
+      Forall2 (λ n pf, P ⟶ₚ{M ⦅qs⦆? n}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2)
         (outs (meas_of M qs)) PFs →
       ⟦P⟧[{[+ t +]} :: w] (meas_sum M qs (map snd PFs))
   where "⟦ P ⟧[ w ]" := (den P w) : lqccs_scope.
 
   (* [⟦P⟧], the union over all words. *)
-  Definition denot (P : proc) (F : T) : Prop := ∃ w, ⟦P⟧[w] F.
+  Definition denot (P : prog) (F : T) : Prop := ∃ w, ⟦P⟧[w] F.
 
   Notation "⟦ P ⟧" := (denot P) : lqccs_scope.
 
@@ -113,21 +113,21 @@ Section Den.
 
   Lemma stable_cgr P Q : P ≡* Q → stable P → stable Q.
   Proof.
-    intros Hc Hs s l Q' Hq Hi.
+    intros Hc Hs k 𝜆 Q' Hq Hi.
     destruct (Congruence_Respects_Transition P _ _ Q' (ex_intro _ Q (conj Hc Hq))) as (P' & Hp & _).
     by apply (Hs _ _ _ Hp).
   Qed.
 
-  Lemma enabled_cgr P Q s : P ≡* Q → enabled P s → enabled Q s.
+  Lemma enabled_cgr P Q k : P ≡* Q → enabled P k → enabled Q k.
   Proof.
-    intros Hc (l & P' & Hp & Hi).
+    intros Hc (𝜆 & P' & Hp & Hi).
     destruct (Congruence_Respects_Transition Q _ _ P' (ex_intro _ P (conj (symmetry Hc) Hp))) as (Q' & Hq & _).
-    by exists l, Q'.
+    by exists 𝜆, Q'.
   Qed.
 
   Lemma den_cgr w : ∀ P Q F, P ≡* Q → ⟦P⟧[w] F → ⟦Q⟧[w] F.
   Proof.
-    induction w as [|s w IH]; intros P Q F Hc Hd;
+    induction w as [|k w IH]; intros P Q F Hc Hd;
       inversion Hd as [? Hs|? Hs|? ? ? Hs|? ? ? ? Hs He Hd'|? ? ? P' ? Hp Hd'|? t ? U qs P' ? Hp Hd'
                        |? t ? qs P' ? Hp Hd'|? t ? M qs PFs Hf]; subst.
     - apply den_nil_stable. by eapply stable_cgr.
@@ -145,11 +145,11 @@ Section Den.
     - destruct (Congruence_Respects_Transition Q _ _ _ (ex_intro _ P (conj (symmetry Hc) Hp))) as (Q' & Hq & HQ).
       symmetry in HQ.
       eapply den_init; [exact Hq|]. by apply IH with P'.
-    - assert (Hall : ∀ (ks : list (nat)) PFs,
-        Forall2 (λ k pf, P ⟶ₚ{M ⦅qs⦆? k}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2) ks PFs →
-        ∃ PFs', Forall2 (λ k pf, Q ⟶ₚ{M ⦅qs⦆? k}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2) ks PFs'
+    - assert (Hall : ∀ (ns : list (nat)) PFs,
+        Forall2 (λ n pf, P ⟶ₚ{M ⦅qs⦆? n}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2) ns PFs →
+        ∃ PFs', Forall2 (λ n pf, Q ⟶ₚ{M ⦅qs⦆? n}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2) ns PFs'
                 ∧ map snd PFs' = map snd PFs).
-      { intros ks PFs0 Hf0. induction Hf0 as [|k pf ks' PFs' (Hp & Hd') _ (PFs'' & Hf'' & E)].
+      { intros ns PFs0 Hf0. induction Hf0 as [|n pf ns' PFs' (Hp & Hd') _ (PFs'' & Hf'' & E)].
         - by exists [].
         - destruct (Congruence_Respects_Transition Q _ _ _ (ex_intro _ P (conj (symmetry Hc) Hp))) as (Q' & Hq & HQ).
       symmetry in HQ.
@@ -168,7 +168,7 @@ End Den.
 Notation "⟦ P ⟧" := (denot P) (at level 0, format "⟦ P ⟧") : lqccs_scope.
 Notation "⟦ P ⟧[ w ]" := (den P w) (at level 0, format "⟦ P ⟧[ w ]") : lqccs_scope.
 
-End LqP.
+End Denotational.
 
 Notation "⟦ P ⟧" := (denot P) (at level 0, format "⟦ P ⟧") : lqccs_scope.
 Notation "⟦ P ⟧[ w ]" := (den P w) (at level 0, format "⟦ P ⟧[ w ]") : lqccs_scope.

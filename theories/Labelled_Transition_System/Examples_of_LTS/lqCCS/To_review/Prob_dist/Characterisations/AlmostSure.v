@@ -41,7 +41,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra pMust_almost_sure lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.General_definition.Algebra pMust_almost_sure lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
 From TestingTheory Require Import lqCCS.To_review.Prob_dist.Language.Syntax lqCCS.To_review.Prob_dist.Language.Program lqCCS.To_review.Prob_dist.Language.Composition.
 
 #[local] Open Scope lqdist_scope.

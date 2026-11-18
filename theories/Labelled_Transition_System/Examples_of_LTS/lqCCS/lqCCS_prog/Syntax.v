@@ -20,7 +20,7 @@
    SOFTWARE.
 *)
 
-(* * lqCCS: syntax
+(* * Syntax of lqCCS programs
 
     Tagged lqCCS (Ceragioli, Gadducci, Lomurno, Tedeschi, arXiv:2604.23756),
     with asynchronous outputs, guarded sums, and recursion as in VACCS. *)
@@ -77,24 +77,24 @@ Notation "e1 =ₑ e2" := (EEq e1 e2) (at level 40, no associativity) : lqccs_sco
 
 (* ** Substitution in expressions *)
 
-Fixpoint exp_subst (k : nat) (v : val) (e : exp) : exp :=
+Fixpoint exp_subst (j : nat) (v : val) (e : exp) : exp :=
   match e with
-  | #i => if decide (i = k) then v else if decide (i < k) then #i else #(pred i)
+  | #i => if decide (i = j) then v else if decide (i < j) then #i else #(pred i)
   | EVal w => w
-  | ¬ₑ e => ¬ₑ exp_subst k v e
-  | e1 ∨ₑ e2 => exp_subst k v e1 ∨ₑ exp_subst k v e2
-  | e1 ≤ₑ e2 => exp_subst k v e1 ≤ₑ exp_subst k v e2
-  | e1 =ₑ e2 => exp_subst k v e1 =ₑ exp_subst k v e2
+  | ¬ₑ e => ¬ₑ exp_subst j v e
+  | e1 ∨ₑ e2 => exp_subst j v e1 ∨ₑ exp_subst j v e2
+  | e1 ≤ₑ e2 => exp_subst j v e1 ≤ₑ exp_subst j v e2
+  | e1 =ₑ e2 => exp_subst j v e1 =ₑ exp_subst j v e2
   end.
 
-Fixpoint exp_shift (k : nat) (e : exp) : exp :=
+Fixpoint exp_shift (j : nat) (e : exp) : exp :=
   match e with
-  | #i => if decide (k ≤ i) then #(S i) else #i
+  | #i => if decide (j ≤ i) then #(S i) else #i
   | EVal w => w
-  | ¬ₑ e => ¬ₑ exp_shift k e
-  | e1 ∨ₑ e2 => exp_shift k e1 ∨ₑ exp_shift k e2
-  | e1 ≤ₑ e2 => exp_shift k e1 ≤ₑ exp_shift k e2
-  | e1 =ₑ e2 => exp_shift k e1 =ₑ exp_shift k e2
+  | ¬ₑ e => ¬ₑ exp_shift j e
+  | e1 ∨ₑ e2 => exp_shift j e1 ∨ₑ exp_shift j e2
+  | e1 ≤ₑ e2 => exp_shift j e1 ≤ₑ exp_shift j e2
+  | e1 =ₑ e2 => exp_shift j e1 =ₑ exp_shift j e2
   end.
 
 (* ** Big-step evaluation〚 e 〛 = v, written [e ⇓ v] in the rules of Ceragioli, Gadducci, Lomurno and Tedeschi. *)
@@ -142,8 +142,8 @@ Class lqCCS_Parameters := {
   Chan_eq_dec :: EqDecision Chan
 }.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Prog_Syntax.
+  Context `{lqP : lqCCS_Parameters}.
 
 (* ** Channels: names and De Bruijn indices of restrictions *)
 
@@ -163,31 +163,31 @@ Inductive prefix : Type :=
 | PMeas (t : tag) (M : meas) (es : list exp)
 | PReinit (t : tag) (e : exp).
 
-Inductive proc : Type :=
+Inductive prog : Type :=
 | PSend (t : tag) (c : channel) (e : exp)
-| PIte (e : exp) (P Q : proc)
-| PPar (P Q : proc)
-| PRes (P : proc)
+| PIte (e : exp) (P Q : prog)
+| PPar (P Q : prog)
+| PRes (P : prog)
 | PVar (i : nat)
-| PRec (t : tag) (P : proc)
+| PRec (t : tag) (P : prog)
 | PG (g : guard)
 with guard : Type :=
 | GNil (es : list exp)
 | GSucc
-| GPre (𝜆 : prefix) (P : proc)
+| GPre (π : prefix) (P : prog)
 | GSum (g1 g2 : guard).
 
-Scheme proc_mut_ind := Induction for proc Sort Prop
+Scheme prog_mut_ind := Induction for prog Sort Prop
   with guard_mut_ind := Induction for guard Sort Prop.
-Combined Scheme proc_guard_ind from proc_mut_ind, guard_mut_ind.
+Combined Scheme prog_guard_ind from prog_mut_ind, guard_mut_ind.
 
-Coercion PG : guard >-> proc.
+Coercion PG : guard >-> prog.
 
-Bind Scope lqccs_scope with proc guard.
+Bind Scope lqccs_scope with prog guard.
 
 Notation "𝟘{ es }" := (GNil es) (at level 1, format "𝟘{ es }") : lqccs_scope.
 Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
-Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
+Notation "π ∙ P" := (GPre π P) (at level 46, right associativity) : lqccs_scope.
 Notation "g + g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
 Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
 Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
@@ -205,72 +205,74 @@ Notation "'If' e 'Then' P 'Else' Q" := (PIte e P Q) (at level 55, e at level 9, 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-(* ** Substitution of a value [P[v/k]] and shift of the value indices
+(* ** Substitution of a value [P[v/j]] and shift of the value indices
 
     [c?.P] and [M(ẽ ▷).P] bind the index [0] of [P]. *)
 
 (* The number of value indices bound by a prefix. *)
-Definition prefix_binds (𝜆 : prefix) : nat :=
-  match 𝜆 with
+Definition prefix_binds (π : prefix) : nat :=
+  match π with
   | _ ∶ _ ? | _ ∶ _ ⦅_ ▷⦆ => 1
   | _ => 0
   end.
 
-Definition prefix_subst (k : nat) (v : val) (𝜆 : prefix) : prefix :=
-  match 𝜆 with
+Definition prefix_subst (j : nat) (v : val) (π : prefix) : prefix :=
+  match π with
   | t ∶ 𝛕 => t ∶ 𝛕
   | t ∶ c ? => t ∶ c ?
-  | t ∶ U ⦅es⦆ => t ∶ U ⦅map (exp_subst k v) es⦆
-  | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_subst k v) es ▷⦆
-  | t ∶ e := |0⟩ => t ∶ (exp_subst k v e) := |0⟩
+  | t ∶ U ⦅es⦆ => t ∶ U ⦅map (exp_subst j v) es⦆
+  | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_subst j v) es ▷⦆
+  | t ∶ e := |0⟩ => t ∶ (exp_subst j v e) := |0⟩
   end.
 
-Fixpoint subst (k : nat) (v : val) (P : proc) : proc :=
+Reserved Notation "P ⁅ v // j ⁆ᵥ" (at level 20).
+
+Fixpoint subst (j : nat) (v : val) (P : prog) : prog :=
   match P with
-  | t ∶ c ! e => t ∶ c ! (exp_subst k v e)
-  | If e Then P Else Q => If (exp_subst k v e) Then subst k v P Else subst k v Q
-  | P ∥ Q => subst k v P ∥ subst k v Q
-  | ν P => ν (subst k v P)
+  | t ∶ c ! e => t ∶ c ! (exp_subst j v e)
+  | If e Then P Else Q => If (exp_subst j v e) Then P ⁅ v // j ⁆ᵥ Else Q ⁅ v // j ⁆ᵥ
+  | P ∥ Q => P ⁅ v // j ⁆ᵥ ∥ Q ⁅ v // j ⁆ᵥ
+  | ν P => ν (P ⁅ v // j ⁆ᵥ)
   | PVar i => PVar i
-  | t ∶ rec ∙ P => t ∶ rec ∙ subst k v P
-  | PG g => PG (gsubst k v g)
+  | t ∶ rec ∙ P => t ∶ rec ∙ P ⁅ v // j ⁆ᵥ
+  | PG g => PG (gsubst j v g)
   end
-with gsubst (k : nat) (v : val) (g : guard) : guard :=
+where "P ⁅ v // j ⁆ᵥ" := (subst j v P) : lqccs_scope
+with gsubst (j : nat) (v : val) (g : guard) : guard :=
   match g with
-  | 𝟘{es} => 𝟘{map (exp_subst k v) es}
+  | 𝟘{es} => 𝟘{map (exp_subst j v) es}
   | 𝟙 => 𝟙
-  | 𝜆 ∙ P => prefix_subst k v 𝜆 ∙ subst (prefix_binds 𝜆 + k) v P
-  | (g1 + g2)%lq => (gsubst k v g1 + gsubst k v g2)%lq
+  | π ∙ P => prefix_subst j v π ∙ P ⁅ v // prefix_binds π + j ⁆ᵥ
+  | (g1 + g2)%lq => (gsubst j v g1 + gsubst j v g2)%lq
   end.
 
-Notation "P ⁅ v // k ⁆ᵥ" := (subst k v P) (at level 20) : lqccs_scope.
 Notation "P ⁅ v ⁆ᵥ" := (subst 0 v P) (at level 20) : lqccs_scope.
 
-Definition prefix_shift (k : nat) (𝜆 : prefix) : prefix :=
-  match 𝜆 with
+Definition prefix_shift (j : nat) (π : prefix) : prefix :=
+  match π with
   | t ∶ 𝛕 => t ∶ 𝛕
   | t ∶ c ? => t ∶ c ?
-  | t ∶ U ⦅es⦆ => t ∶ U ⦅map (exp_shift k) es⦆
-  | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_shift k) es ▷⦆
-  | t ∶ e := |0⟩ => t ∶ (exp_shift k e) := |0⟩
+  | t ∶ U ⦅es⦆ => t ∶ U ⦅map (exp_shift j) es⦆
+  | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_shift j) es ▷⦆
+  | t ∶ e := |0⟩ => t ∶ (exp_shift j e) := |0⟩
   end.
 
-Fixpoint shiftv (k : nat) (P : proc) : proc :=
+Fixpoint shiftv (j : nat) (P : prog) : prog :=
   match P with
-  | t ∶ c ! e => t ∶ c ! (exp_shift k e)
-  | If e Then P Else Q => If (exp_shift k e) Then shiftv k P Else shiftv k Q
-  | P ∥ Q => shiftv k P ∥ shiftv k Q
-  | ν P => ν (shiftv k P)
+  | t ∶ c ! e => t ∶ c ! (exp_shift j e)
+  | If e Then P Else Q => If (exp_shift j e) Then shiftv j P Else shiftv j Q
+  | P ∥ Q => shiftv j P ∥ shiftv j Q
+  | ν P => ν (shiftv j P)
   | PVar i => PVar i
-  | t ∶ rec ∙ P => t ∶ rec ∙ shiftv k P
-  | PG g => PG (gshiftv k g)
+  | t ∶ rec ∙ P => t ∶ rec ∙ shiftv j P
+  | PG g => PG (gshiftv j g)
   end
-with gshiftv (k : nat) (g : guard) : guard :=
+with gshiftv (j : nat) (g : guard) : guard :=
   match g with
-  | 𝟘{es} => 𝟘{map (exp_shift k) es}
+  | 𝟘{es} => 𝟘{map (exp_shift j) es}
   | 𝟙 => 𝟙
-  | 𝜆 ∙ P => prefix_shift k 𝜆 ∙ shiftv (prefix_binds 𝜆 + k) P
-  | (g1 + g2)%lq => (gshiftv k g1 + gshiftv k g2)%lq
+  | π ∙ P => prefix_shift j π ∙ shiftv (prefix_binds π + j) P
+  | (g1 + g2)%lq => (gshiftv j g1 + gshiftv j g2)%lq
   end.
 
 Notation "⇧ᵥ" := (shiftv 0) : lqccs_scope.
@@ -286,13 +288,13 @@ Definition swap01 (i : nat) : nat :=
 Definition ren_chan (f : nat → nat) (c : channel) : channel :=
   match c with CName c => CName c | CIdx i => CIdx (f i) end.
 
-Definition prefix_ren (f : nat → nat) (𝜆 : prefix) : prefix :=
-  match 𝜆 with
+Definition prefix_ren (f : nat → nat) (π : prefix) : prefix :=
+  match π with
   | t ∶ c ? => t ∶ (ren_chan f c) ?
-  | _ => 𝜆
+  | _ => π
   end.
 
-Fixpoint ren (f : nat → nat) (P : proc) : proc :=
+Fixpoint ren (f : nat → nat) (P : prog) : prog :=
   match P with
   | t ∶ c ! e => t ∶ (ren_chan f c) ! e
   | If e Then P Else Q => If e Then ren f P Else ren f Q
@@ -306,7 +308,7 @@ with gren (f : nat → nat) (g : guard) : guard :=
   match g with
   | 𝟘{es} => 𝟘{es}
   | 𝟙 => 𝟙
-  | 𝜆 ∙ P => prefix_ren f 𝜆 ∙ ren f P
+  | π ∙ P => prefix_ren f π ∙ ren f P
   | (g1 + g2)%lq => (gren f g1 + gren f g2)%lq
   end.
 
@@ -314,52 +316,54 @@ with gren (f : nat → nat) (g : guard) : guard :=
 
     [rec.P] binds the recursion index [0] of [P]. *)
 
-Fixpoint rshift (k : nat) (P : proc) : proc :=
+Fixpoint rshift (j : nat) (P : prog) : prog :=
   match P with
   | t ∶ c ! e => t ∶ c ! e
-  | If e Then P1 Else P2 => If e Then rshift k P1 Else rshift k P2
-  | P1 ∥ P2 => rshift k P1 ∥ rshift k P2
-  | ν P1 => ν (rshift k P1)
-  | PVar i => if decide (k ≤ i) then PVar (S i) else PVar i
-  | t ∶ rec ∙ P1 => t ∶ rec ∙ rshift (S k) P1
-  | PG g => PG (grshift k g)
+  | If e Then P1 Else P2 => If e Then rshift j P1 Else rshift j P2
+  | P1 ∥ P2 => rshift j P1 ∥ rshift j P2
+  | ν P1 => ν (rshift j P1)
+  | PVar i => if decide (j ≤ i) then PVar (S i) else PVar i
+  | t ∶ rec ∙ P1 => t ∶ rec ∙ rshift (S j) P1
+  | PG g => PG (grshift j g)
   end
-with grshift (k : nat) (g : guard) : guard :=
+with grshift (j : nat) (g : guard) : guard :=
   match g with
   | 𝟘{es} => 𝟘{es}
   | 𝟙 => 𝟙
-  | 𝜆 ∙ P => 𝜆 ∙ rshift k P
-  | (g1 + g2)%lq => (grshift k g1 + grshift k g2)%lq
+  | π ∙ P => π ∙ rshift j P
+  | (g1 + g2)%lq => (grshift j g1 + grshift j g2)%lq
   end.
 
 Notation "⇧ₚ" := (rshift 0) : lqccs_scope.
 
-(* ** Substitution of a process for a recursion index [P[Q/k]] *)
+(* ** Substitution of a process for a recursion index [P[Q/j]] *)
 
-Fixpoint pr_subst (k : nat) (P Q : proc) : proc :=
+Reserved Notation "P ⁅ Q // j ⁆ₚ" (at level 20).
+
+Fixpoint pr_subst (j : nat) (P Q : prog) : prog :=
   match P with
   | t ∶ c ! e => t ∶ c ! e
-  | If e Then P1 Else P2 => If e Then pr_subst k P1 Q Else pr_subst k P2 Q
-  | P1 ∥ P2 => pr_subst k P1 Q ∥ pr_subst k P2 Q
-  | ν P1 => ν (pr_subst k P1 (ren S Q))
-  | PVar i => if decide (i = k) then Q else if decide (k < i) then PVar (pred i) else PVar i
-  | t ∶ rec ∙ P1 => t ∶ rec ∙ pr_subst (S k) P1 (⇧ₚ Q)
-  | PG g => PG (gpr_subst k g Q)
+  | If e Then P1 Else P2 => If e Then P1 ⁅ Q // j ⁆ₚ Else P2 ⁅ Q // j ⁆ₚ
+  | P1 ∥ P2 => P1 ⁅ Q // j ⁆ₚ ∥ P2 ⁅ Q // j ⁆ₚ
+  | ν P1 => ν (P1 ⁅ ren S Q // j ⁆ₚ)
+  | PVar i => if decide (i = j) then Q else if decide (j < i) then PVar (pred i) else PVar i
+  | t ∶ rec ∙ P1 => t ∶ rec ∙ P1 ⁅ ⇧ₚ Q // S j ⁆ₚ
+  | PG g => PG (gpr_subst j g Q)
   end
-with gpr_subst (k : nat) (g : guard) (Q : proc) : guard :=
+where "P ⁅ Q // j ⁆ₚ" := (pr_subst j P Q) : lqccs_scope
+with gpr_subst (j : nat) (g : guard) (Q : prog) : guard :=
   match g with
   | 𝟘{es} => 𝟘{es}
   | 𝟙 => 𝟙
-  | 𝜆 ∙ P => 𝜆 ∙ pr_subst k P (Nat.iter (prefix_binds 𝜆) ⇧ᵥ Q)
-  | (g1 + g2)%lq => (gpr_subst k g1 Q + gpr_subst k g2 Q)%lq
+  | π ∙ P => π ∙ P ⁅ Nat.iter (prefix_binds π) ⇧ᵥ Q // j ⁆ₚ
+  | (g1 + g2)%lq => (gpr_subst j g1 Q + gpr_subst j g2 Q)%lq
   end.
 
-Notation "P ⁅ Q // k ⁆ₚ" := (pr_subst k P Q) (at level 20) : lqccs_scope.
 Notation "P ⁅ Q ⁆ₚ" := (pr_subst 0 P Q) (at level 20) : lqccs_scope.
 
 (* ** Iterated restrictions and lifts *)
 
-Fixpoint Ѵ (n : nat) (P : proc) : proc :=
+Fixpoint Ѵ (n : nat) (P : prog) : prog :=
   match n with 0 => P | S n => ν (Ѵ n P) end.
 
 Fixpoint liftn (n : nat) (f : nat → nat) : nat → nat :=
@@ -375,7 +379,7 @@ Definition eval_qubits (es : list exp) : option (list qubit) :=
 
 (* ** Size *)
 
-Fixpoint size (P : proc) : nat :=
+Fixpoint size (P : prog) : nat :=
   match P with
   | PSend _ _ _ | PVar _ => 1
   | If _ Then P Else Q | P ∥ Q => S (size P + size Q)
@@ -385,7 +389,7 @@ Fixpoint size (P : proc) : nat :=
 with gsize (g : guard) : nat :=
   match g with
   | 𝟘{_} | 𝟙 => 0
-  | 𝜆 ∙ P => S (size P)
+  | π ∙ P => S (size P)
   | (g1 + g2)%lq => S (gsize g1 + gsize g2)
   end.
 
@@ -402,11 +406,11 @@ Definition tag_up (t : tag) : tag := Cantor.to_nat ((Cantor.of_nat t).1, S (Cant
 Lemma tag_up_root t : tag_root (tag_up t) = tag_root t.
 Proof. unfold tag_root, tag_up. by rewrite Cantor.cancel_of_to. Qed.
 
-Lemma tag_up_inj t u : tag_up t = tag_up u → t = u.
+Lemma tag_up_inj t t' : tag_up t = tag_up t' → t = t'.
 Proof.
   unfold tag_up. intros E. apply (f_equal Cantor.of_nat) in E. rewrite !Cantor.cancel_of_to in E.
-  injection E as E1 E2. rewrite <- (Cantor.cancel_to_of t), <- (Cantor.cancel_to_of u).
-  f_equal. destruct (Cantor.of_nat t), (Cantor.of_nat u). simpl in *. congruence.
+  injection E as E1 E2. rewrite <- (Cantor.cancel_to_of t), <- (Cantor.cancel_to_of t').
+  f_equal. destruct (Cantor.of_nat t), (Cantor.of_nat t'). simpl in *. congruence.
 Qed.
 
 Lemma tag_up_neq t : tag_up t ≠ t.
@@ -415,8 +419,8 @@ Proof.
   destruct (Cantor.of_nat t) as [r g]. simpl in E. injection E as E. lia.
 Qed.
 
-Definition prefix_tren (f : tag → tag) (𝜆 : prefix) : prefix :=
-  match 𝜆 with
+Definition prefix_tren (f : tag → tag) (π : prefix) : prefix :=
+  match π with
   | t ∶ 𝛕 => f t ∶ 𝛕
   | t ∶ c ? => f t ∶ c ?
   | t ∶ U ⦅es⦆ => f t ∶ U ⦅es⦆
@@ -424,7 +428,7 @@ Definition prefix_tren (f : tag → tag) (𝜆 : prefix) : prefix :=
   | t ∶ e := |0⟩ => f t ∶ e := |0⟩
   end.
 
-Fixpoint tren (f : tag → tag) (P : proc) : proc :=
+Fixpoint tren (f : tag → tag) (P : prog) : prog :=
   match P with
   | t ∶ c ! e => f t ∶ c ! e
   | If e Then P Else Q => If e Then tren f P Else tren f Q
@@ -438,33 +442,33 @@ with gtren (f : tag → tag) (g : guard) : guard :=
   match g with
   | 𝟘{es} => 𝟘{es}
   | 𝟙 => 𝟙
-  | 𝜆 ∙ P => prefix_tren f 𝜆 ∙ tren f P
+  | π ∙ P => prefix_tren f π ∙ tren f P
   | (g1 + g2)%lq => (gtren f g1 + gtren f g2)%lq
   end.
 
 Notation "P ↑" := (tren tag_up P) (at level 20, format "P ↑") : lqccs_scope.
 
-Lemma prefix_tren_ext f g 𝜆 : (∀ t, f t = g t) → prefix_tren f 𝜆 = prefix_tren g 𝜆.
-Proof. intros H. destruct 𝜆; simpl; by rewrite H. Qed.
+Lemma prefix_tren_ext f g π : (∀ t, f t = g t) → prefix_tren f π = prefix_tren g π.
+Proof. intros H. destruct π; simpl; by rewrite H. Qed.
 
 Lemma tren_ext_all :
   (∀ P f g, (∀ t, f t = g t) → tren f P = tren g P)
   ∧ (∀ h f g, (∀ t, f t = g t) → gtren f h = gtren g h).
 Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  apply prog_guard_ind; simpl; intros; try (f_equal; auto; done).
   f_equal; [by apply prefix_tren_ext | by apply H].
 Qed.
 
 Lemma tren_ext f g P : (∀ t, f t = g t) → tren f P = tren g P.
 Proof. apply (proj1 tren_ext_all). Qed.
 
-Lemma prefix_tren_comp f g 𝜆 : prefix_tren f (prefix_tren g 𝜆) = prefix_tren (f ∘ g) 𝜆.
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tren_comp f g π : prefix_tren f (prefix_tren g π) = prefix_tren (f ∘ g) π.
+Proof. by destruct π. Qed.
 
 Lemma tren_comp_all :
   (∀ P f g, tren f (tren g P) = tren (f ∘ g) P) ∧ (∀ h f g, gtren f (gtren g h) = gtren (f ∘ g) h).
 Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  apply prog_guard_ind; simpl; intros; try (f_equal; auto; done).
   f_equal; [apply prefix_tren_comp | apply H].
 Qed.
 
@@ -481,14 +485,14 @@ Lemma tren_base_up P : tren tag_base (P↑) = tren tag_base P.
 Proof. rewrite tren_comp. apply tren_ext. intros t. apply tag_base_up. Qed.
 
 Lemma size_tren : (∀ P f, size (tren f P) = size P) ∧ (∀ g f, gsize (gtren f g) = gsize g).
-Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
+Proof. apply prog_guard_ind; simpl; intros; congruence. Qed.
 
-End LqP.
+End Prog_Syntax.
 
-Bind Scope lqccs_scope with proc guard.
+Bind Scope lqccs_scope with prog guard.
 Notation "𝟘{ es }" := (GNil es) (at level 1, format "𝟘{ es }") : lqccs_scope.
 Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
-Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
+Notation "π ∙ P" := (GPre π P) (at level 46, right associativity) : lqccs_scope.
 Notation "g + g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
 Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
 Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
@@ -501,9 +505,9 @@ Notation "t ∶ e ':=' '|0⟩'" := (PReinit t e) (at level 40, e at level 9) : l
 Notation "t ∶ c ! e" := (PSend t c e) (at level 40, c at level 9, e at level 9) : lqccs_scope.
 Notation "t ∶ 'rec' ∙ P" := (PRec t P) (at level 40, P at level 40) : lqccs_scope.
 Notation "'If' e 'Then' P 'Else' Q" := (PIte e P Q) (at level 55, e at level 9, P at level 54, Q at level 54) : lqccs_scope.
-Notation "P ⁅ v // k ⁆ᵥ" := (subst k v P) (at level 20) : lqccs_scope.
+Notation "P ⁅ v // j ⁆ᵥ" := (subst j v P) (at level 20) : lqccs_scope.
 Notation "P ⁅ v ⁆ᵥ" := (subst 0 v P) (at level 20) : lqccs_scope.
-Notation "P ⁅ Q // k ⁆ₚ" := (pr_subst k P Q) (at level 20) : lqccs_scope.
+Notation "P ⁅ Q // j ⁆ₚ" := (pr_subst j P Q) (at level 20) : lqccs_scope.
 Notation "P ⁅ Q ⁆ₚ" := (pr_subst 0 P Q) (at level 20) : lqccs_scope.
 Notation "P ↑" := (tren tag_up P) (at level 20, format "P ↑") : lqccs_scope.
 Notation "⇧ᵥ" := (shiftv 0) : lqccs_scope.

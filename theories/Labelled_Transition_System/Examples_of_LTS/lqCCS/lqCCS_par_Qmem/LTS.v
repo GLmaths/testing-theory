@@ -25,33 +25,28 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.lqCCS_prog.Syntax.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.lqCCS_prog.Syntax.
 From TestingTheory Require Import lqCCS.General_definition.Parallel_choice_LTS.
 From TestingTheory Require Import lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS.
 
 #[local] Open Scope lqccs_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Prog_Sync_Mem.
+  Context `{lqP : lqCCS_Parameters} `{QM : QuantumModel}.
 
-Section Par_Qmem.
-  Context `{QM : QuantumModel}.
-
+  (* Synchronisation of the program and of the memory, in [ρ ∣ P]. *)
   Inductive sync : mem_action → prog_action → Prop :=
   | sync_op U qs : sync (? (sop_act U qs)) (PrOp U qs)
   | sync_meas M qs n : sync (meas_of M qs !ₘ n) (PrMeas M qs n)
   | sync_init q : sync (? (init_act q)) (PrReinit q).
 
-  Inductive sync_sys : mem_action + prog_action → prog_action → Prop :=
-  | sync_sys_mem b a : sync b a → sync_sys (inl b) a
-  | sync_sys_chan a a' : sync_chan a a' → sync_sys (inr a) a'.
+  Lemma sync_lbl_ren μ1 μ2 : sync μ1 μ2 → ren_lbl S (ActExt μ2) = ActExt μ2.
+  Proof. by destruct 1. Qed.
 
-End Par_Qmem.
-
-End LqP.
+End Prog_Sync_Mem.
 
 Notation "'𝔻ₘₑₘ'" := sync : lqccs_scope.
-Notation "P ⟶{ l }[ s ] P'" := (par_step mem_step prog_step sync P s l P')
-  (at level 70, format "P  ⟶{ l }[ s ]  P'") : lqccs_scope.
-Notation "P ↛{ l }[ s ] P'" := (¬ par_step mem_step prog_step sync P s l P')
-  (at level 70, format "P  ↛{ l }[ s ]  P'") : lqccs_scope.
+Notation "P ⟶{ 𝜆 }[ k ] P'" := (par_step mem_step prog_step sync P k 𝜆 P')
+  (at level 70, format "P  ⟶{ 𝜆 }[ k ]  P'") : lqccs_scope.
+Notation "P ↛{ 𝜆 }[ k ] P'" := (¬ par_step mem_step prog_step sync P k 𝜆 P')
+  (at level 70, format "P  ↛{ 𝜆 }[ k ]  P'") : lqccs_scope.

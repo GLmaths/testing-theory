@@ -19,28 +19,16 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
-(* * lqCCS: structural congruence
 
-    The structural congruence of lqCCS (Ceragioli et al., POPL 2024,
-    Figure 2), on the syntax with recursion, in the style of VACCS
-    ([VACCS.Language.Congruence]): restricted channels are De Bruijn indices,
-    so scope extrusion [(ν P) ∥ Q ≡ ν (P ∥ Q⁺)] has no side condition and
-    the order of two restrictions is exchanged by a swap of indices.  Tags
-    are kept: congruent processes have the same tags.  The congruence is
-    closed under all contexts, recursion included.
-
-    A transition after [≡*] is a transition followed by [≡*], with the
-    same choices ([Congruence_Respects_Transition]). *)
+(* * Structural congruence of lqCCS programs*)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list sets relations.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -50,10 +38,10 @@ From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitut
 Reserved Notation "P ≡ Q" (at level 70, no associativity).
 Reserved Notation "g ≡ᵍ h" (at level 70, no associativity).
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Prog_Congruence.
+  Context `{lqP : lqCCS_Parameters}.
 
-Inductive cgr_step : proc → proc → Prop :=
+Inductive cgr_step : prog → prog → Prop :=
 | cgr_par_nil_step P : (P ∥ 𝟘) ≡ P
 | cgr_par_nil_rev_step P : P ≡ (P ∥ 𝟘)
 | cgr_par_com_step P Q : (P ∥ Q) ≡ (Q ∥ P)
@@ -85,8 +73,8 @@ with gcgr_step : guard → guard → Prop :=
 | cgr_choice_nil_step g es : (g + 𝟘{es}) ≡ᵍ g
 | cgr_choice_nil_rev_step g es : g ≡ᵍ (g + 𝟘{es})
 | cgr_choice_com_step g h : (g + h) ≡ᵍ (h + g)
-| cgr_choice_assoc_rev_step g h k : (g + (h + k)) ≡ᵍ ((g + h) + k)
-| cgr_choice_assoc_step g h k : ((g + h) + k) ≡ᵍ (g + (h + k))
+| cgr_choice_assoc_rev_step g1 g2 g3 : (g1 + (g2 + g3)) ≡ᵍ ((g1 + g2) + g3)
+| cgr_choice_assoc_step g1 g2 g3 : ((g1 + g2) + g3) ≡ᵍ (g1 + (g2 + g3))
 | cgr_nil_val_step es1 e v es2 :
     〚 e 〛 = v → 𝟘{es1 ++ e :: es2} ≡ᵍ 𝟘{es1 ++ EVal v :: es2}
 | cgr_nil_val_rev_step es1 e v es2 :
@@ -104,7 +92,7 @@ with gcgr_step : guard → guard → Prop :=
 | cgr_init_val_rev_step t e v P :
     〚 e 〛 = v → (t ∶ v := |0⟩ ∙ P) ≡ᵍ (t ∶ e := |0⟩ ∙ P)
 (* contexts *)
-| cgr_prefix_step 𝜆 P P' : P ≡ P' → (𝜆 ∙ P) ≡ᵍ (𝜆 ∙ P')
+| cgr_prefix_step π P P' : P ≡ P' → (π ∙ P) ≡ᵍ (π ∙ P')
 | cgr_choice_step g g' h : g ≡ᵍ g' → (g + h) ≡ᵍ (g' + h)
 | cgr_choice_right_step g h h' : h ≡ᵍ h' → (g + h) ≡ᵍ (g + h')
 where "P ≡ Q" := (cgr_step P Q) : lqccs_scope
@@ -116,7 +104,7 @@ Combined Scheme cgr_gcgr_step_ind from cgr_step_mut_ind, gcgr_step_mut_ind.
 
 (* ** The congruence *)
 
-Definition cgr : relation proc := rtc cgr_step.
+Definition cgr : relation prog := rtc cgr_step.
 Definition gcgr : relation guard := rtc gcgr_step.
 Arguments cgr (_ _)%_lq.
 Arguments gcgr (_ _)%_lq.
@@ -207,15 +195,15 @@ Proof. apply rtc_once, cgr_choice_nil_rev_step. Qed.
 Lemma gcgr_choice_com g h : (g + h) ≡ᵍ* (h + g).
 Proof. apply gcgr_of_step, cgr_choice_com_step. Qed.
 
-Lemma gcgr_choice_assoc g h k : ((g + h) + k) ≡ᵍ* (g + (h + k)).
+Lemma gcgr_choice_assoc g1 g2 g3 : ((g1 + g2) + g3) ≡ᵍ* (g1 + (g2 + g3)).
 Proof. apply rtc_once, cgr_choice_assoc_step. Qed.
 
-Lemma gcgr_choice_assoc_rev g h k : (g + (h + k)) ≡ᵍ* ((g + h) + k).
+Lemma gcgr_choice_assoc_rev g1 g2 g3 : (g1 + (g2 + g3)) ≡ᵍ* ((g1 + g2) + g3).
 Proof. apply gcgr_of_step, cgr_choice_assoc_rev_step. Qed.
 
 (* ** Congruence under contexts *)
 
-Lemma cgr_ctx (f : proc → proc) :
+Lemma cgr_ctx (f : prog → prog) :
   (∀ P Q, P ≡ Q → (f P) ≡ (f Q)) → ∀ P Q, P ≡* Q → f P ≡* f Q.
 Proof.
   intros Hf P Q. induction 1 as [P|P Q R HPQ _ IH]; [done|].
@@ -225,7 +213,7 @@ Qed.
 Lemma gcgr_ctx (f : guard → guard) :
   (∀ g h, g ≡ᵍ h → (f g) ≡ᵍ (f h)) → ∀ g h, g ≡ᵍ* h → (f g) ≡ᵍ* (f h).
 Proof.
-  intros Hf g h. induction 1 as [g|g h k Hgh _ IH]; [done|].
+  intros Hf g h. induction 1 as [g|g h g' Hgh _ IH]; [done|].
   etrans; [|exact IH]. apply rtc_once. by apply Hf.
 Qed.
 
@@ -255,11 +243,11 @@ Proof. intros. etrans; [by apply cgr_if_then|by apply cgr_if_else]. Qed.
 
 Lemma cgr_guard g h : g ≡ᵍ* h → g ≡* h.
 Proof.
-  induction 1 as [g|g h k Hgh _ IH]; [done|].
+  induction 1 as [g|g h g' Hgh _ IH]; [done|].
   etrans; [|exact IH]. apply rtc_once. by constructor.
 Qed.
 
-Lemma gcgr_prefix 𝜆 P P' : P ≡* P' → (𝜆 ∙ P) ≡ᵍ* (𝜆 ∙ P').
+Lemma gcgr_prefix π P P' : P ≡* P' → (π ∙ P) ≡ᵍ* (π ∙ P').
 Proof.
   induction 1 as [P|P Q R HPQ _ IH]; [done|].
   etrans; [|exact IH]. apply rtc_once. by constructor.
@@ -291,7 +279,7 @@ Proof. intros P P' HP. by apply cgr_recursion. Qed.
 #[global] Instance guard_proper : Proper (gcgr ==> cgr) PG.
 Proof. intros g h Hg. by apply cgr_guard. Qed.
 
-#[global] Instance prefix_proper 𝜆 : Proper (cgr ==> gcgr) (GPre 𝜆).
+#[global] Instance prefix_proper π : Proper (cgr ==> gcgr) (GPre π).
 Proof. intros P P' HP. by apply gcgr_prefix. Qed.
 
 #[global] Instance sum_proper : Proper (gcgr ==> gcgr ==> gcgr) GSum.
@@ -324,8 +312,8 @@ Proof. intros P P' HP. by apply cgr_ren. Qed.
 (* ** Substitution and shift of values *)
 
 Lemma cgr_step_subst :
-  (∀ P Q, P ≡ Q → ∀ k v, (P ⁅ v // k ⁆ᵥ) ≡ (Q ⁅ v // k ⁆ᵥ))
-  ∧ (∀ g h, g ≡ᵍ h → ∀ k v, (gsubst k v g) ≡ᵍ (gsubst k v h)).
+  (∀ P Q, P ≡ Q → ∀ j v, (P ⁅ v // j ⁆ᵥ) ≡ (Q ⁅ v // j ⁆ᵥ))
+  ∧ (∀ g h, g ≡ᵍ h → ∀ j v, (gsubst j v g) ≡ᵍ (gsubst j v h)).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: try (rewrite <- (proj1 ren_subst); by constructor).
@@ -334,15 +322,15 @@ Proof.
     by constructor.
 Qed.
 
-Lemma cgr_subst k v P Q : P ≡* Q → P ⁅ v // k ⁆ᵥ ≡* Q ⁅ v // k ⁆ᵥ.
-Proof. apply (cgr_ctx (subst k v)). intros. by apply cgr_step_subst. Qed.
+Lemma cgr_subst j v P Q : P ≡* Q → P ⁅ v // j ⁆ᵥ ≡* Q ⁅ v // j ⁆ᵥ.
+Proof. apply (cgr_ctx (subst j v)). intros. by apply cgr_step_subst. Qed.
 
-#[global] Instance subst_proper k v : Proper (cgr ==> cgr) (subst k v).
+#[global] Instance subst_proper j v : Proper (cgr ==> cgr) (subst j v).
 Proof. intros P P' HP. by apply cgr_subst. Qed.
 
 Lemma cgr_step_shiftv :
-  (∀ P Q, P ≡ Q → ∀ k, (shiftv k P) ≡ (shiftv k Q))
-  ∧ (∀ g h, g ≡ᵍ h → ∀ k, (gshiftv k g) ≡ᵍ (gshiftv k h)).
+  (∀ P Q, P ≡ Q → ∀ j, (shiftv j P) ≡ (shiftv j Q))
+  ∧ (∀ g h, g ≡ᵍ h → ∀ j, (gshiftv j g) ≡ᵍ (gshiftv j h)).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: try (rewrite <- (proj1 ren_shiftv); by constructor).
@@ -351,8 +339,8 @@ Proof.
     by constructor.
 Qed.
 
-Lemma cgr_shiftv k P Q : P ≡* Q → shiftv k P ≡* shiftv k Q.
-Proof. apply (cgr_ctx (shiftv k)). intros. by apply cgr_step_shiftv. Qed.
+Lemma cgr_shiftv j P Q : P ≡* Q → shiftv j P ≡* shiftv j Q.
+Proof. apply (cgr_ctx (shiftv j)). intros. by apply cgr_step_shiftv. Qed.
 
 Lemma cgr_shiftv_iter n P Q : P ≡* Q → Nat.iter n ⇧ᵥ P ≡* Nat.iter n ⇧ᵥ Q.
 Proof. induction n; simpl; [done|]. intros. by apply cgr_shiftv, IHn. Qed.
@@ -360,34 +348,34 @@ Proof. induction n; simpl; [done|]. intros. by apply cgr_shiftv, IHn. Qed.
 (* ** Substitution of processes *)
 
 Lemma cgr_step_pr_subst_l :
-  (∀ P P', P ≡ P' → ∀ k Q, (P ⁅ Q // k ⁆ₚ) ≡ (P' ⁅ Q // k ⁆ₚ))
-  ∧ (∀ g g', g ≡ᵍ g' → ∀ k Q, (gpr_subst k g Q) ≡ᵍ (gpr_subst k g' Q)).
+  (∀ P P', P ≡ P' → ∀ j Q, (P ⁅ Q // j ⁆ₚ) ≡ (P' ⁅ Q // j ⁆ₚ))
+  ∧ (∀ g g', g ≡ᵍ g' → ∀ j Q, (gpr_subst j g Q) ≡ᵍ (gpr_subst j g' Q)).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: try (rewrite <- (proj1 ren_pr_subst); by constructor).
-  all: replace ((ren swap01 P) ⁅ ren S (ren S Q) // k ⁆ₚ) with (ren swap01 (P ⁅ ren S (ren S Q) // k ⁆ₚ))
+  all: replace ((ren swap01 P) ⁅ ren S (ren S Q) // j ⁆ₚ) with (ren swap01 (P ⁅ ren S (ren S Q) // j ⁆ₚ))
     by (rewrite (proj1 ren_pr_subst); by rewrite ren_swap01_SS); by constructor.
 Qed.
 
-Lemma cgr_pr_subst_l P P' k Q : P ≡* P' → P ⁅ Q // k ⁆ₚ ≡* P' ⁅ Q // k ⁆ₚ.
-Proof. apply (cgr_ctx (λ P, P ⁅ Q // k ⁆ₚ)). intros. by apply cgr_step_pr_subst_l. Qed.
+Lemma cgr_pr_subst_l P P' j Q : P ≡* P' → P ⁅ Q // j ⁆ₚ ≡* P' ⁅ Q // j ⁆ₚ.
+Proof. apply (cgr_ctx (λ P, P ⁅ Q // j ⁆ₚ)). intros. by apply cgr_step_pr_subst_l. Qed.
 
 Lemma cgr_step_rshift :
-  (∀ P P', P ≡ P' → ∀ k, (rshift k P) ≡ (rshift k P'))
-  ∧ (∀ g g', g ≡ᵍ g' → ∀ k, (grshift k g) ≡ᵍ (grshift k g')).
+  (∀ P P', P ≡ P' → ∀ j, (rshift j P) ≡ (rshift j P'))
+  ∧ (∀ g g', g ≡ᵍ g' → ∀ j, (grshift j g) ≡ᵍ (grshift j g')).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: rewrite <- (proj1 ren_rshift); by constructor.
 Qed.
 
-Lemma cgr_rshift k P P' : P ≡* P' → rshift k P ≡* rshift k P'.
-Proof. apply (cgr_ctx (rshift k)). intros. by apply cgr_step_rshift. Qed.
+Lemma cgr_rshift j P P' : P ≡* P' → rshift j P ≡* rshift j P'.
+Proof. apply (cgr_ctx (rshift j)). intros. by apply cgr_step_rshift. Qed.
 
 Lemma cgr_pr_subst_r :
-  (∀ P k Q Q', Q ≡* Q' → P ⁅ Q // k ⁆ₚ ≡* P ⁅ Q' // k ⁆ₚ)
-  ∧ (∀ g k Q Q', Q ≡* Q' → (gpr_subst k g Q) ≡ᵍ* (gpr_subst k g Q')).
+  (∀ P j Q Q', Q ≡* Q' → P ⁅ Q // j ⁆ₚ ≡* P ⁅ Q' // j ⁆ₚ)
+  ∧ (∀ g j Q Q', Q ≡* Q' → (gpr_subst j g Q) ≡ᵍ* (gpr_subst j g Q')).
 Proof.
-  apply proc_guard_ind; simpl; intros; try done.
+  apply prog_guard_ind; simpl; intros; try done.
   - apply cgr_full_if; auto.
   - apply cgr_fullpar; auto.
   - apply cgr_res, H. by apply cgr_ren.
@@ -422,7 +410,7 @@ Qed.
 
 (* ** Facts on steps *)
 
-Lemma pstep_nil es s l P' : 𝟘{es} ↛ₚ{l}[s] P'.
+Lemma pstep_nil es k 𝜆 P' : 𝟘{es} ↛ₚ{𝜆}[k] P'.
 Proof. intros Hs%prog_step_guard. inversion Hs. Qed.
 
 Lemma S_inj_fun : ∀ i j : nat, S i = S j → i = j.
@@ -430,28 +418,28 @@ Proof. intros i j [=]. done. Qed.
 
 (* ** Congruence respects transitions, as in VACCS *)
 
-Definition sc_then_lts (P : proc) (s : choice) (l : Labels prog_action) (Q : proc) : Prop :=
-  ∃ R, P ≡* R ∧ R ⟶ₚ{l}[s] Q.
+Definition sc_then_lts (P : prog) (k : choice) (𝜆 : Labels prog_action) (Q : prog) : Prop :=
+  ∃ R, P ≡* R ∧ R ⟶ₚ{𝜆}[k] Q.
 
-Definition lts_then_sc (P : proc) (s : choice) (l : Labels prog_action) (Q : proc) : Prop :=
-  ∃ R, P ⟶ₚ{l}[s] R ∧ R ≡* Q.
+Definition lts_then_sc (P : prog) (k : choice) (𝜆 : Labels prog_action) (Q : prog) : Prop :=
+  ∃ R, P ⟶ₚ{𝜆}[k] R ∧ R ≡* Q.
 
-Notation "P ≡* . ⟶ₚ{ l }[ s ] Q" := (sc_then_lts P s l Q) (at level 70, format "P  ≡*  .  ⟶ₚ{ l }[ s ]  Q") : lqccs_scope.
-Notation "P ⟶ₚ{ l }[ s ] . ≡* Q" := (lts_then_sc P s l Q) (at level 70, format "P  ⟶ₚ{ l }[ s ]  .  ≡*  Q") : lqccs_scope.
+Notation "P ≡* . ⟶ₚ{ 𝜆 }[ k ] Q" := (sc_then_lts P k 𝜆 Q) (at level 70, format "P  ≡*  .  ⟶ₚ{ 𝜆 }[ k ]  Q") : lqccs_scope.
+Notation "P ⟶ₚ{ 𝜆 }[ k ] . ≡* Q" := (lts_then_sc P k 𝜆 Q) (at level 70, format "P  ⟶ₚ{ 𝜆 }[ k ]  .  ≡*  Q") : lqccs_scope.
 
-Theorem Congruence_Respects_Transition : ∀ P s l Q, P ≡* . ⟶ₚ{l}[s] Q → P ⟶ₚ{l}[s] . ≡* Q.
+Theorem Congruence_Respects_Transition : ∀ P k 𝜆 Q, P ≡* . ⟶ₚ{𝜆}[k] Q → P ⟶ₚ{𝜆}[k] . ≡* Q.
 Proof.
-  intros P s l Q (R & HPR & HR). symmetry in HPR. revert Q HR.
+  intros P k 𝜆 Q (R & HPR & HR). symmetry in HPR. revert Q HR.
   induction HPR as [R0|R0 R1 P0 H1 _ IH]; intros Q HR; [by exists Q|].
-  assert (∃ Q1, R1 ⟶ₚ{l}[s] Q1 ∧ Q ≡* Q1) as (Q1 & HQ1 & E1).
-  { clear IH. revert s l Q HR. induction H1 as [P|P|P Q|P Q R|P Q R|e P Q He|e P Q He|e P Q He|e P Q He|t c e v He|t c e v He|e v P Q He|e v P Q He|es|es|P|P|P Q|P Q|e P P' Q _ IH|e P Q Q' _ IH|P P' Q H IH|P Q Q' H IH|P P' _ IH|t P P' H _|g g' H].
+  assert (∃ Q1, R1 ⟶ₚ{𝜆}[k] Q1 ∧ Q ≡* Q1) as (Q1 & HQ1 & E1).
+  { clear IH. revert k 𝜆 Q HR. induction H1 as [P|P|P Q|P Q R|P Q R|e P Q He|e P Q He|e P Q He|e P Q He|t c e v He|t c e v He|e v P Q He|e v P Q He|es|es|P|P|P Q|P Q|e P P' Q _ IH|e P Q Q' _ IH|P P' Q H IH|P Q Q' H IH|P P' _ IH|t P P' H _|g g' H].
     (* [P ∥ 𝟘 ≡ P] *)
-    - intros s l X Hs. inversion Hs as [| | | |? ? ? ? P' HP| | | | |]; subst;
+    - intros k 𝜆 X Hs. inversion Hs as [| | | |? ? ? ? P' HP| | | | |]; subst;
         try (exfalso; by eapply pstep_nil).
       exists P'. split; [done|]. apply cgr_par_nil.
-    - intros s l P' Hs. exists (P' ∥ 𝟘). split; [by apply pr_parL|]. apply cgr_par_nil_rev.
+    - intros k 𝜆 P' Hs. exists (P' ∥ 𝟘). split; [by apply pr_parL|]. apply cgr_par_nil_rev.
     (* [P ∥ Q ≡ Q ∥ P] *)
-    - intros s l X Hs.
+    - intros k 𝜆 X Hs.
       inversion Hs as [| | | |? ? ? ? P' HP|? ? ? ? Q' HQ|? ? t t' c v P' Q' HP HQ|? ? t t' c v P' Q' HP HQ| |];
         subst.
       + exists (Q ∥ P'). split; [by apply pr_parR|]. apply cgr_par_com.
@@ -459,7 +447,7 @@ Proof.
       + exists (Q' ∥ P'). split; [rewrite (comm disj_union {[+ t +]}); by eapply pr_syncR|]. apply cgr_par_com.
       + exists (Q' ∥ P'). split; [rewrite (comm disj_union {[+ t +]}); by eapply pr_syncL|]. apply cgr_par_com.
     (* [P ∥ (Q ∥ R) ≡ (P ∥ Q) ∥ R] *)
-    - intros s l X Hs.
+    - intros k 𝜆 X Hs.
       inversion Hs as [| | | |? ? ? ? P' HP|? ? ? ? X' HX|? ? t t' c v P' X' HP HX|? ? t t' c v P' X' HP HX| |];
         subst.
       + exists ((P' ∥ Q) ∥ R). split; [by do 2 apply pr_parL|]. apply cgr_par_assoc_rev.
@@ -476,7 +464,7 @@ Proof.
         * exists ((P' ∥ Q') ∥ R). split; [apply pr_parL; by eapply pr_syncR|]. apply cgr_par_assoc_rev.
         * exists ((P' ∥ Q) ∥ R'). split; [eapply pr_syncR; [by apply pr_parL|done]|]. apply cgr_par_assoc_rev.
     (* [(P ∥ Q) ∥ R ≡ P ∥ (Q ∥ R)] *)
-    - intros s l X Hs.
+    - intros k 𝜆 X Hs.
       inversion Hs as [| | | |? ? ? ? X' HX|? ? ? ? R' HR|? ? t t' c v X' R' HX HR|? ? t t' c v X' R' HX HR| |];
         subst.
       + inversion HX as [| | | |? ? ? ? P' HP|? ? ? ? Q' HQ|? ? t t' c v P' Q' HP HQ|? ? t t' c v P' Q' HP HQ| |];
@@ -493,36 +481,36 @@ Proof.
         * exists (P' ∥ (Q ∥ R')). split; [eapply pr_syncR; [done|by apply pr_parR]|]. apply cgr_par_assoc.
         * exists (P ∥ (Q' ∥ R')). split; [apply pr_parR; by eapply pr_syncR|]. apply cgr_par_assoc.
     (* [If e Then P Else Q ≡ P] when [e] is true *)
-    - intros s l P' Hs. exists P'. split; [|done]. inversion Hs; subst; [done|congruence].
-    - intros s l P' Hs. exists P'. split; [by apply pr_iteT|done].
+    - intros k 𝜆 P' Hs. exists P'. split; [|done]. inversion Hs; subst; [done|congruence].
+    - intros k 𝜆 P' Hs. exists P'. split; [by apply pr_iteT|done].
     (* [If e Then P Else Q ≡ Q] when [e] is false *)
-    - intros s l P' Hs. exists P'. split; [|done]. inversion Hs; subst; [congruence|done].
-    - intros s l P' Hs. exists P'. split; [by apply pr_iteF|done].
+    - intros k 𝜆 P' Hs. exists P'. split; [|done]. inversion Hs; subst; [congruence|done].
+    - intros k 𝜆 P' Hs. exists P'. split; [by apply pr_iteF|done].
     (* evaluation in an output *)
-    - intros s l P' Hs. exists P'. split; [|done].
+    - intros k 𝜆 P' Hs. exists P'. split; [|done].
       inversion Hs; subst; constructor; simpl in *; congruence.
-    - intros s l P' Hs. exists P'. split; [|done].
+    - intros k 𝜆 P' Hs. exists P'. split; [|done].
       inversion Hs; subst; constructor; simpl in *; congruence.
     (* evaluation in a conditional *)
-    - intros s l P' Hs. exists P'. split; [|done].
+    - intros k 𝜆 P' Hs. exists P'. split; [|done].
       inversion Hs; subst; [apply pr_iteT|apply pr_iteF]; simpl in *; congruence.
-    - intros s l P' Hs. exists P'. split; [|done].
+    - intros k 𝜆 P' Hs. exists P'. split; [|done].
       inversion Hs; subst; [apply pr_iteT|apply pr_iteF]; simpl in *; congruence.
     (* [ν 𝟘 ≡ 𝟘] *)
-    - intros s l P' Hs. inversion Hs; subst. exfalso. by eapply pstep_nil.
-    - intros s l P' Hs. exfalso. by eapply pstep_nil.
+    - intros k 𝜆 P' Hs. inversion Hs; subst. exfalso. by eapply pstep_nil.
+    - intros k 𝜆 P' Hs. exfalso. by eapply pstep_nil.
     (* [ν ν P ≡ ν ν (swap P)] *)
-    - intros s l X Hs. inversion Hs as [| | | | | | | |? ? ? Y HY|]; subst.
+    - intros k 𝜆 X Hs. inversion Hs as [| | | | | | | |? ? ? Y HY|]; subst.
       inversion HY as [| | | | | | | |? ? ? P' HP|]; subst.
       pose proof (prog_step_ren swap01 _ _ _ _ HP) as HP'. rewrite ren_lbl_swap01_SS in HP'.
       exists (ν ν (ren swap01 P')). split; [by do 2 apply pr_res|]. apply cgr_res_swap.
-    - intros s l X Hs. inversion Hs as [| | | | | | | |? ? ? Y HY|]; subst.
+    - intros k 𝜆 X Hs. inversion Hs as [| | | | | | | |? ? ? Y HY|]; subst.
       inversion HY as [| | | | | | | |? ? ? P' HP|]; subst.
       pose proof (prog_step_ren swap01 _ _ _ _ HP) as HP'.
       rewrite ren_lbl_swap01_SS, ren_swap01_invol in HP'.
       exists (ν ν (ren swap01 P')). split; [by do 2 apply pr_res|]. apply cgr_res_swap.
     (* [(ν P) ∥ Q ≡ ν (P ∥ Q⁺)] *)
-    - intros s l X Hs.
+    - intros k 𝜆 X Hs.
       inversion Hs as [| | | |? ? ? ? X' HX|? ? ? ? Q' HQ|? ? t t' c v X' Q' HX HQ|? ? t t' c v X' Q' HX HQ| |];
         subst.
       + inversion HX as [| | | | | | | |? ? ? P' HP|]; subst.
@@ -537,103 +525,103 @@ Proof.
         pose proof (prog_step_ren S _ _ _ _ HQ) as HQ'. simpl in HQ'.
         exists (ν (P' ∥ ren S Q')). split; [apply pr_res; simpl; by eapply pr_syncR|].
         apply cgr_res_scope_rev.
-    - intros s l X Hs. inversion Hs as [| | | | | | | |? ? ? Y HY|]; subst.
+    - intros k 𝜆 X Hs. inversion Hs as [| | | | | | | |? ? ? Y HY|]; subst.
       inversion HY as [| | | |? ? ? ? P' HP|? ? ? ? Y' HQ|? ? t t' c v P' Y' HP HQ|? ? t t' c v P' Y' HP HQ| |];
         subst.
       + exists ((ν P') ∥ Q). split; [by apply pr_parL, pr_res|]. apply cgr_res_scope.
-      + destruct (prog_step_ren_inv S S_inj_fun _ _ _ _ HQ) as (l0 & Q' & El & -> & HQ0).
+      + destruct (prog_step_ren_inv S S_inj_fun _ _ _ _ HQ) as (𝜆0 & Q' & El & -> & HQ0).
         apply ren_lbl_inj in El as ->; [|exact S_inj_fun].
         exists ((ν P) ∥ Q'). split; [by apply pr_parR|]. apply cgr_res_scope.
-      + destruct l; simpl in *; simplify_eq.
-        destruct (prog_step_ren_inv S S_inj_fun _ _ _ _ HQ) as (l0 & Q' & El & -> & HQ0).
-        destruct l0 as [[c0 v0|c0 v0| | |]|]; simpl in El; simplify_eq.
+      + destruct 𝜆; simpl in *; simplify_eq.
+        destruct (prog_step_ren_inv S S_inj_fun _ _ _ _ HQ) as (𝜆0 & Q' & El & -> & HQ0).
+        destruct 𝜆0 as [[c0 v0|c0 v0| | |]|]; simpl in El; simplify_eq.
         exists ((ν P') ∥ Q'). split; [|apply cgr_res_scope].
         eapply pr_syncL; [|exact HQ0]. by apply pr_res.
-      + destruct l; simpl in *; simplify_eq.
-        destruct (prog_step_ren_inv S S_inj_fun _ _ _ _ HQ) as (l0 & Q' & El & -> & HQ0).
-        destruct l0 as [[c0 v0|c0 v0| | |]|]; simpl in El; simplify_eq.
+      + destruct 𝜆; simpl in *; simplify_eq.
+        destruct (prog_step_ren_inv S S_inj_fun _ _ _ _ HQ) as (𝜆0 & Q' & El & -> & HQ0).
+        destruct 𝜆0 as [[c0 v0|c0 v0| | |]|]; simpl in El; simplify_eq.
         exists ((ν P') ∥ Q'). split; [|apply cgr_res_scope].
         eapply pr_syncR; [|exact HQ0]. by apply pr_res.
     (* contexts *)
-    - intros s l X Hs. inversion Hs as [| |? ? ? ? ? ? He Hp|? ? ? ? ? ? He Hq| | | | | |]; subst.
+    - intros k 𝜆 X Hs. inversion Hs as [| |? ? ? ? ? ? He Hp|? ? ? ? ? ? He Hq| | | | | |]; subst.
       + destruct (IH _ _ _ Hp) as (Y & Hs' & HY). exists Y. split; [|done]. by apply pr_iteT.
       + exists X. split; [by apply pr_iteF|done].
-    - intros s l X Hs. inversion Hs as [| |? ? ? ? ? ? He Hp|? ? ? ? ? ? He Hq| | | | | |]; subst.
+    - intros k 𝜆 X Hs. inversion Hs as [| |? ? ? ? ? ? He Hp|? ? ? ? ? ? He Hq| | | | | |]; subst.
       + exists X. split; [by apply pr_iteT|done].
       + destruct (IH _ _ _ Hq) as (Y & Hs' & HY). exists Y. split; [|done]. by apply pr_iteF.
-    - intros s l X Hs.
+    - intros k 𝜆 X Hs.
       inversion Hs as [| | | |? ? ? ? P1 HP|? ? ? ? Q1 HQ|? ? t t' c v P1 Q1 HP HQ|? ? t t' c v P1 Q1 HP HQ| |];
         subst.
       + destruct (IH _ _ _ HP) as (Y & Hs' & HY). exists (Y ∥ Q). split; [by apply pr_parL|by apply cgr_par].
       + exists (P' ∥ Q1). split; [by apply pr_parR|by apply cgr_par, cgr_of_step].
       + destruct (IH _ _ _ HP) as (Y & Hs' & HY). exists (Y ∥ Q1). split; [by eapply pr_syncL|by apply cgr_par].
       + destruct (IH _ _ _ HP) as (Y & Hs' & HY). exists (Y ∥ Q1). split; [by eapply pr_syncR|by apply cgr_par].
-    - intros s l X Hs.
+    - intros k 𝜆 X Hs.
       inversion Hs as [| | | |? ? ? ? P1 HP|? ? ? ? Q1 HQ|? ? t t' c v P1 Q1 HP HQ|? ? t t' c v P1 Q1 HP HQ| |];
         subst.
       + exists (P1 ∥ Q'). split; [by apply pr_parL|by apply cgr_par_r, cgr_of_step].
       + destruct (IH _ _ _ HQ) as (Y & Hs' & HY). exists (P ∥ Y). split; [by apply pr_parR|by apply cgr_par_r].
       + destruct (IH _ _ _ HQ) as (Y & Hs' & HY). exists (P1 ∥ Y). split; [by eapply pr_syncL|by apply cgr_par_r].
       + destruct (IH _ _ _ HQ) as (Y & Hs' & HY). exists (P1 ∥ Y). split; [by eapply pr_syncR|by apply cgr_par_r].
-    - intros s l X Hs. inversion Hs as [| | | | | | | |? ? ? P1 HP|]; subst.
+    - intros k 𝜆 X Hs. inversion Hs as [| | | | | | | |? ? ? P1 HP|]; subst.
       destruct (IH _ _ _ HP) as (Y & Hs' & HY). exists (ν Y). split; [by apply pr_res|by apply cgr_res].
-    - intros s l Y Hs. inversion Hs; subst.
+    - intros k 𝜆 Y Hs. inversion Hs; subst.
       exists (P' ⁅ (t ∶ rec ∙ P')↑ ⁆ₚ). split; [constructor|by apply cgr_unfold, cgr_of_step].
-    - induction H as [g es|g es|g h|g h k|g h k|es1 e v es2 _|es1 e v es2 _|t U es1 e v es2 P He|t U es1 e v es2 P He|t M es1 e v es2 P He|t M es1 e v es2 P He|t e v P He|t e v P He|𝜆 P P' H|g g' h _ IH|g h h' _ IH].
+    - induction H as [g es|g es|g h|g1 g2 g3|g1 g2 g3|es1 e v es2 _|es1 e v es2 _|t U es1 e v es2 P He|t U es1 e v es2 P He|t M es1 e v es2 P He|t M es1 e v es2 P He|t e v P He|t e v P He|π P P' H|g g' h _ IH|g h h' _ IH].
       (* [g + 𝟘 ≡ g] *)
-      + intros s l P' Hs. exists P'. split; [|done].
+      + intros k 𝜆 P' Hs. exists P'. split; [|done].
         apply prog_step_guard in Hs. inversion Hs; subst; [by apply pr_guard|exfalso; by eapply pstep_nil, pr_guard].
-      + intros s l P' Hs. exists P'. split; [by apply pr_sumL|done].
+      + intros k 𝜆 P' Hs. exists P'. split; [by apply pr_sumL|done].
       (* [g + h ≡ h + g] *)
-      + intros s l P' Hs%prog_step_guard. exists P'. split; [|done]. apply prog_step_guard.
+      + intros k 𝜆 P' Hs%prog_step_guard. exists P'. split; [|done]. apply prog_step_guard.
         inversion Hs; subst; [by apply pg_sumR|by apply pg_sumL].
-      (* [g + (h + k) ≡ (g + h) + k] *)
-      + intros s l P' Hs%prog_step_guard. exists P'. split; [|done]. apply prog_step_guard.
+      (* [g1 + (g2 + g3) ≡ (g1 + g2) + g3] *)
+      + intros k 𝜆 P' Hs%prog_step_guard. exists P'. split; [|done]. apply prog_step_guard.
         inversion Hs as [| | | | |? ? ? ? ? H1|? ? ? ? ? H2]; subst.
         * by do 2 apply pg_sumL.
         * inversion H2; subst; [by apply pg_sumL, pg_sumR|by apply pg_sumR].
-      + intros s l P' Hs%prog_step_guard. exists P'. split; [|done]. apply prog_step_guard.
+      + intros k 𝜆 P' Hs%prog_step_guard. exists P'. split; [|done]. apply prog_step_guard.
         inversion Hs as [| | | | |? ? ? ? ? H1|? ? ? ? ? H2]; subst.
         * inversion H1; subst; [by apply pg_sumL|by apply pg_sumR, pg_sumL].
         * by do 2 apply pg_sumR.
       (* evaluation in the prefixes *)
-      + intros s l P' Hs. exfalso. by eapply pstep_nil.
-      + intros s l P' Hs. exfalso. by eapply pstep_nil.
+      + intros k 𝜆 P' Hs. exfalso. by eapply pstep_nil.
+      + intros k 𝜆 P' Hs. exfalso. by eapply pstep_nil.
       + pose proof (eval_qubits_val es1 e v es2 He) as Ev.
-        intros s l X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
+        intros k 𝜆 X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
         inversion Hs; subst; constructor; congruence.
       + pose proof (eval_qubits_val es1 e v es2 He) as Ev.
-        intros s l X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
+        intros k 𝜆 X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
         inversion Hs; subst; constructor; congruence.
       + pose proof (eval_qubits_val es1 e v es2 He) as Ev.
-        intros s l X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
+        intros k 𝜆 X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
         inversion Hs; subst; constructor; congruence.
       + pose proof (eval_qubits_val es1 e v es2 He) as Ev.
-        intros s l X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
+        intros k 𝜆 X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
         inversion Hs; subst; constructor; congruence.
       + assert (Ev : eval_qubit e = eval_qubit v) by (unfold eval_qubit; simpl; by rewrite He).
-        intros s l X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
+        intros k 𝜆 X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
         inversion Hs; subst; constructor; congruence.
       + assert (Ev : eval_qubit e = eval_qubit v) by (unfold eval_qubit; simpl; by rewrite He).
-        intros s l X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
+        intros k 𝜆 X Hs%prog_step_guard. exists X. split; [|done]. apply prog_step_guard.
         inversion Hs; subst; constructor; congruence.
       (* contexts *)
-      + intros s l X Hs%prog_step_guard. pose proof (cgr_of_step _ _ H) as Hc. inversion Hs; subst.
+      + intros k 𝜆 X Hs%prog_step_guard. pose proof (cgr_of_step _ _ H) as Hc. inversion Hs; subst.
         * exists P'. split; [apply pr_tau|done].
         * exists (P' ⁅ v ⁆ᵥ). split; [apply pr_recv|by apply cgr_subst].
         * exists P'. split; [by apply pr_op|done].
         * exists (P' ⁅ VNat n ⁆ᵥ). split; [by apply pr_meas|by apply cgr_subst].
         * exists P'. split; [by apply pr_init|done].
-      + intros s l X Hs%prog_step_guard. inversion Hs as [| | | | |? ? ? ? ? Hg|? ? ? ? ? Hh]; subst.
+      + intros k 𝜆 X Hs%prog_step_guard. inversion Hs as [| | | | |? ? ? ? ? Hg|? ? ? ? ? Hh]; subst.
         * destruct (IH _ _ _ (pr_guard _ _ _ _ Hg)) as (Y & Hs' & HY). exists Y. split; [by apply pr_sumL|done].
         * exists X. split; [by apply pr_guard, pg_sumR|done].
-      + intros s l X Hs%prog_step_guard. inversion Hs as [| | | | |? ? ? ? ? Hg|? ? ? ? ? Hh]; subst.
+      + intros k 𝜆 X Hs%prog_step_guard. inversion Hs as [| | | | |? ? ? ? ? Hg|? ? ? ? ? Hh]; subst.
         * exists X. split; [by apply pr_guard, pg_sumL|done].
         * destruct (IH _ _ _ (pr_guard _ _ _ _ Hh)) as (Y & Hs' & HY). exists Y. split; [by apply pr_sumR|done]. }
   destruct (IH _ HQ1) as (Q2 & HQ2 & E2). exists Q2. split; [done|]. etrans; [exact E2|by symmetry].
 Qed.
 
-End LqP.
+End Prog_Congruence.
 
 Arguments cgr {_} (_ _)%_lq.
 Arguments gcgr {_} (_ _)%_lq.
@@ -641,7 +629,5 @@ Notation "P ≡ Q" := (cgr_step P Q) : lqccs_scope.
 Notation "g ≡ᵍ h" := (gcgr_step g h) : lqccs_scope.
 Notation "P ≡* Q" := (cgr P Q) (at level 70) : lqccs_scope.
 Notation "g ≡ᵍ* h" := (gcgr g h) (at level 70) : lqccs_scope.
-Notation "P ≡* . ⟶ₚ{ l }[ s ] Q" := (sc_then_lts P s l Q) (at level 70, format "P  ≡*  .  ⟶ₚ{ l }[ s ]  Q") : lqccs_scope.
-Notation "P ⟶ₚ{ l }[ s ] . ≡* Q" := (lts_then_sc P s l Q) (at level 70, format "P  ⟶ₚ{ l }[ s ]  .  ≡*  Q") : lqccs_scope.
-
-(* end hide *)
+Notation "P ≡* . ⟶ₚ{ 𝜆 }[ k ] Q" := (sc_then_lts P k 𝜆 Q) (at level 70, format "P  ≡*  .  ⟶ₚ{ 𝜆 }[ k ]  Q") : lqccs_scope.
+Notation "P ⟶ₚ{ 𝜆 }[ k ] . ≡* Q" := (lts_then_sc P k 𝜆 Q) (at level 70, format "P  ⟶ₚ{ 𝜆 }[ k ]  .  ≡*  Q") : lqccs_scope.

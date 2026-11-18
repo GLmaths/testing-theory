@@ -28,14 +28,14 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Final.
+  Context `{lqP : lqCCS_Parameters}.
 
 #[global] Instance coact_eq_dec : EqDecision coact.
 Proof. solve_decision. Defined.
@@ -86,17 +86,17 @@ Proof.
     pose proof (find_none _ _ E (a, b) Hin) as Hf. simpl in Hf. by rewrite bool_decide_eq_false in Hf.
 Qed.
 
-Definition valsof (n : node) : list val :=
-  omap (λ a, match a with CoIn _ _ v => Some v | CoMeas _ _ _ k => Some (VNat k) | _ => None end) n.
+Definition valsof (z : node) : list val :=
+  omap (λ a, match a with CoIn _ _ v => Some v | CoMeas _ _ _ n => Some (VNat n) | _ => None end) z.
 
-Lemma len_le_sum (L : list node) n : n ∈ L → length n ≤ foldr (λ m acc, length m + acc) 0 L.
+Lemma len_le_sum (L : list node) z : z ∈ L → length z ≤ foldr (λ z' acc, length z' + acc) 0 L.
 Proof.
-  induction L as [|m L IH]; intros Hin; [by apply elem_of_nil in Hin|]. simpl.
+  induction L as [|z' L IH]; intros Hin; [by apply elem_of_nil in Hin|]. simpl.
   apply elem_of_cons in Hin as [->|Hin]; [lia|]. specialize (IH Hin). lia.
 Qed.
 
 Section Data.
-  Context `{QM : QuantumModel} (p q : proc * St) (T : proc) (Ch : channel → Prop) (K : tag → okind).
+  Context `{QM : QuantumModel} (p q : prog * St) (T : prog) (Ch : channel → Prop) (K : tag → okind).
   Context (O : node → list msg) (r : nat → dist comp) (w : nat → item) (F : list tag) (Mo : option meas) (N : nat).
 
   Notation U := (cells (M := lq_menu O) (S_T T) r w).
@@ -104,42 +104,42 @@ Section Data.
   Notation reach := (reach p q T Ch K O r w F Mo).
 
   Hypothesis HT : obs_for p q T.
-  Hypothesis HF : ∀ k, k ∈ tags T → k ∈ F.
+  Hypothesis HF : ∀ t, t ∈ tags T → t ∈ F.
 
-  Definition LVp (n : node) : Prop := ∃ k D x l, k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.1 = n ++ l.
+  Definition LVp (z : node) : Prop := ∃ n D x l, n ≤ N ∧ reach n D ∧ x ∈ D ∧ x.1.1 = z ++ l.
 
   Definition CLp (ch : channel) : Prop :=
-    ∃ k D x t v P', k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P'.
+    ∃ n D x t v P', n ≤ N ∧ reach n D ∧ x ∈ D ∧ x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P'.
 
-  Lemma reach_fin k : fin (reach k).
+  Lemma reach_fin n : fin (reach n).
   Proof.
-    induction k as [|k IH]; simpl; [apply fin_eq|]. apply fin_bind; [exact IH|]. intros D0 _.
+    induction n as [|n IH]; simpl; [apply fin_eq|]. apply fin_bind; [exact IH|]. intros D0 _.
     exact (J0_branching p q T Ch K O r w F Mo HT HF D0).
   Qed.
 
-  Lemma comps_fin : fin (λ x : comp * weight, ∃ k D, k ≤ N ∧ reach k D ∧ x ∈ D).
+  Lemma comps_fin : fin (λ x : comp * weight, ∃ n D, n ≤ N ∧ reach n D ∧ x ∈ D).
   Proof.
-    apply (fin_mono _ (λ x, ∃ k, k ∈ seq 0 (S N) ∧ ∃ D, reach k D ∧ x ∈ D)).
-    - intros x (k & D & Hk & Hr & Hx). exists k. split; [apply elem_of_seq; lia|by exists D].
-    - apply (fin_bind _ _ (fin_elem _)). intros k _. apply (fin_bind _ _ (reach_fin k)). intros D _. apply fin_elem.
+    apply (fin_mono _ (λ x, ∃ n, n ∈ seq 0 (S N) ∧ ∃ D, reach n D ∧ x ∈ D)).
+    - intros x (n & D & Hk & Hr & Hx). exists n. split; [apply elem_of_seq; lia|by exists D].
+    - apply (fin_bind _ _ (fin_elem _)). intros n _. apply (fin_bind _ _ (reach_fin n)). intros D _. apply fin_elem.
   Qed.
 
   Lemma LVp_fin : fin LVp.
   Proof.
-    apply (fin_mono _ (λ n, ∃ x : comp * weight, (∃ k D, k ≤ N ∧ reach k D ∧ x ∈ D) ∧ ∃ l, x.1.1 = n ++ l)).
-    - intros n (k & D & x & l & Hk & Hr & Hx & E). exists x. split; [by exists k, D|by exists l].
+    apply (fin_mono _ (λ z, ∃ x : comp * weight, (∃ n D, n ≤ N ∧ reach n D ∧ x ∈ D) ∧ ∃ l, x.1.1 = z ++ l)).
+    - intros z (n & D & x & l & Hk & Hr & Hx & E). exists x. split; [by exists n, D|by exists l].
     - apply (fin_bind _ _ comps_fin). intros x _.
-      apply (fin_mono _ (λ n, n ∈ (λ i, take i x.1.1) <$> seq 0 (S (length x.1.1)))); [|apply fin_elem].
-      intros n (l & E). apply list_elem_of_fmap. exists (length n). split.
+      apply (fin_mono _ (λ z, z ∈ (λ i, take i x.1.1) <$> seq 0 (S (length x.1.1)))); [|apply fin_elem].
+      intros z (l & E). apply list_elem_of_fmap. exists (length z). split.
       + rewrite E. by rewrite take_app_length.
       + apply elem_of_seq. rewrite E, length_app. lia.
   Qed.
 
   Lemma CLp_fin : fin CLp.
   Proof.
-    apply (fin_mono _ (λ ch, ∃ x : comp * weight, (∃ k D, k ≤ N ∧ reach k D ∧ x ∈ D)
+    apply (fin_mono _ (λ ch, ∃ x : comp * weight, (∃ n D, n ≤ N ∧ reach n D ∧ x ∈ D)
                          ∧ ∃ t v P', x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P')).
-    - intros ch (k & D & x & t & v & P' & Hk & Hr & Hx & Hp). exists x. split; [by exists k, D|by exists t, v, P'].
+    - intros ch (n & D & x & t & v & P' & Hk & Hr & Hx & Hp). exists x. split; [by exists n, D|by exists t, v, P'].
     - apply (fin_bind _ _ comps_fin). intros x _.
       apply (fin_mono _ (λ ch, ∃ a, psteps x.1.2.1 [] [] a ∧ ∃ v, a.1 = ch ! v)).
       + intros ch (t & v & P' & Hp). exists (ch ! v, P'). split; [exists ({[+ t +]}); by split|by exists v].
@@ -147,75 +147,75 @@ Section Data.
         intros c1 c2 (v1 & E1) (v2 & E2). congruence.
   Qed.
 
-  Lemma LVp_pre n m : LVp (n ++ m) → LVp n.
-  Proof. intros (k & D & x & l & Hk & Hr & Hx & E). exists k, D, x, (m ++ l). by rewrite app_assoc. Qed.
+  Lemma LVp_pre z z' : LVp (z ++ z') → LVp z.
+  Proof. intros (n & D & x & l & Hk & Hr & Hx & E). exists n, D, x, (z' ++ l). by rewrite app_assoc. Qed.
 
-  Lemma LVp_reach k D x : k ≤ N → reach k D → x ∈ D → LVp x.1.1.
-  Proof. intros Hk Hr Hx. exists k, D, x, []. by rewrite app_nil_r. Qed.
+  Lemma LVp_reach n D x : n ≤ N → reach n D → x ∈ D → LVp x.1.1.
+  Proof. intros Hk Hr Hx. exists n, D, x, []. by rewrite app_nil_r. Qed.
 
-  Lemma CLp_reach k D x t ch v P' : k ≤ N → reach k D → x ∈ D →
+  Lemma CLp_reach n D x t ch v P' : n ≤ N → reach n D → x ∈ D →
     x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P' → CLp ch.
-  Proof. intros Hk Hr Hx Hp. by exists k, D, x, t, v, P'. Qed.
+  Proof. intros Hk Hr Hx Hp. by exists n, D, x, t, v, P'. Qed.
 
   Lemma data_exist :
     ∃ (VL : list val) (reps : node → list offer) (wrapb : node → offer → bool) (f0 : nat),
-      (∀ m, NoDup (reps m))
-      ∧ (∀ m o, o ∈ reps m → J0 m o ∧ ¬ menu T m o)
-      ∧ (∀ m o, LVp m → J0 m o → ¬ menu T m o → (∀ k c, o = OffIn k c → CLp c) → o ∈ reps m)
-      ∧ (∀ m o, wrapb m o = true → ¬ U m o)
-      ∧ (∀ m o, LVp m → menu T m o → ¬ U m o → wrapb m o = true)
-      ∧ (∀ n a, LVp n → a ∈ n → ¬ unlisted VL a)
-      ∧ (∀ n, LVp n → length n < f0).
+      (∀ z', NoDup (reps z'))
+      ∧ (∀ z' o, o ∈ reps z' → J0 z' o ∧ ¬ menu T z' o)
+      ∧ (∀ z' o, LVp z' → J0 z' o → ¬ menu T z' o → (∀ t c, o = OffIn t c → CLp c) → o ∈ reps z')
+      ∧ (∀ z' o, wrapb z' o = true → ¬ U z' o)
+      ∧ (∀ z' o, LVp z' → menu T z' o → ¬ U z' o → wrapb z' o = true)
+      ∧ (∀ z a, LVp z → a ∈ z → ¬ unlisted VL a)
+      ∧ (∀ z, LVp z → length z < f0).
   Proof.
     destruct LVp_fin as (L & HL). exists (concat (map valsof L)).
-    assert (Hrp : ∀ m, ∃ l : list offer, NoDup l
-               ∧ ∀ o, o ∈ l ↔ (J0 m o ∧ ¬ menu T m o ∧ ∀ k c, o = OffIn k c → CLp c)).
-    { intros m. apply fin_exact. destruct CLp_fin as (LC & HLC).
-      apply (fin_mono _ (λ o, (J0 m o ∧ ∀ k c, o ≠ OffIn k c)
-                             ∨ ∃ c, c ∈ LC ∧ ∃ k, J0 m (OffIn k c) ∧ o = OffIn k c)).
-      - intros o (HJ & _ & Hc). destruct (classic (∃ k c, o = OffIn k c)) as [(k & c & ->)|Hn].
-        + right. exists c. split; [apply HLC; by apply (Hc k c)|by exists k].
-        + left. split; [done|]. intros k c E. apply Hn. by exists k, c.
-      - apply fin_or; [exact (J0_fin_cells p q T Ch K O r w F Mo m)|].
+    assert (Hrp : ∀ z', ∃ l : list offer, NoDup l
+               ∧ ∀ o, o ∈ l ↔ (J0 z' o ∧ ¬ menu T z' o ∧ ∀ t c, o = OffIn t c → CLp c)).
+    { intros z'. apply fin_exact. destruct CLp_fin as (LC & HLC).
+      apply (fin_mono _ (λ o, (J0 z' o ∧ ∀ t c, o ≠ OffIn t c)
+                             ∨ ∃ c, c ∈ LC ∧ ∃ t, J0 z' (OffIn t c) ∧ o = OffIn t c)).
+      - intros o (HJ & _ & Hc). destruct (classic (∃ t c, o = OffIn t c)) as [(t & c & ->)|Hn].
+        + right. exists c. split; [apply HLC; by apply (Hc t c)|by exists t].
+        + left. split; [done|]. intros t c E. apply Hn. by exists t, c.
+      - apply fin_or; [exact (J0_fin_cells p q T Ch K O r w F Mo z')|].
         apply (fin_bind _ _ (fin_elem LC)). intros c _.
-        exact (fin_img (λ k, OffIn k c) _ (J0_fin_in p q T Ch K O r w F Mo HT HF m c)). }
+        exact (fin_img (λ t, OffIn t c) _ (J0_fin_in p q T Ch K O r w F Mo HT HF z' c)). }
     destruct (fin_choice _ L Hrp) as (g & Hg1 & Hg2). exists (lk [] g).
     assert (HW : ∃ WL : list (node * offer), ∀ x, x ∈ WL ↔ (x.1 ∈ L ∧ menu T x.1 x.2 ∧ ¬ U x.1 x.2)).
     { destruct (fin_exact (λ x : node * offer, x.1 ∈ L ∧ menu T x.1 x.2 ∧ ¬ U x.1 x.2)) as (WL & _ & HWL);
         [|by exists WL].
-      apply (fin_mono _ (λ x : node * offer, ∃ m, m ∈ L ∧ ∃ o, menu T m o ∧ x = (m, o))).
-      - intros [m o] (Hm & HM & _). exists m. split; [done|]. by exists o.
-      - apply (fin_bind _ _ (fin_elem L)). intros m _. exact (fin_img (pair m) _ (menu_fin T m)). }
-    destruct HW as (WL & HWL). exists (λ m o, bool_decide ((m, o) ∈ WL)).
-    exists (S (foldr (λ m acc, length m + acc) 0 L)).
+      apply (fin_mono _ (λ x : node * offer, ∃ z', z' ∈ L ∧ ∃ o, menu T z' o ∧ x = (z', o))).
+      - intros [z' o] (Hm & HM & _). exists z'. split; [done|]. by exists o.
+      - apply (fin_bind _ _ (fin_elem L)). intros z' _. exact (fin_img (pair z') _ (menu_fin T z')). }
+    destruct HW as (WL & HWL). exists (λ z' o, bool_decide ((z', o) ∈ WL)).
+    exists (S (foldr (λ z' acc, length z' + acc) 0 L)).
     split; [|split; [|split; [|split; [|split; [|split]]]]].
-    - intros m. destruct (lk_spec _ [] g m Hg2) as [[-> _]|[Hn _]]; [constructor|done].
-    - intros m o Hin. destruct (lk_spec _ [] g m Hg2) as [[E _]|[_ Hx]].
+    - intros z'. destruct (lk_spec _ [] g z' Hg2) as [[-> _]|[Hn _]]; [constructor|done].
+    - intros z' o Hin. destruct (lk_spec _ [] g z' Hg2) as [[E _]|[_ Hx]].
       + rewrite E in Hin. by apply elem_of_nil in Hin.
       + apply Hx in Hin as (Ha & Hb & _). done.
-    - intros m o Hm HJ HnM Hc. destruct (lk_spec _ [] g m Hg2) as [[_ Hno]|[_ Hx]].
-      + exfalso. destruct (Hg1 m (HL m Hm)) as (b & Hb). exact (Hno b Hb).
+    - intros z' o Hm HJ HnM Hc. destruct (lk_spec _ [] g z' Hg2) as [[_ Hno]|[_ Hx]].
+      + exfalso. destruct (Hg1 z' (HL z' Hm)) as (b & Hb). exact (Hno b Hb).
       + apply Hx. done.
-    - intros m o Hw. apply bool_decide_eq_true in Hw. apply HWL in Hw as (_ & _ & Hn). exact Hn.
-    - intros m o Hm HM HnU. apply bool_decide_eq_true. apply HWL. simpl. split; [exact (HL m Hm)|done].
-    - intros n a Hn Ha Hu.
-      assert (Hv : ∀ v, v ∈ valsof n → v ∈ concat (map valsof L)).
-      { intros v Hv. apply list_elem_of_In, in_concat. exists (valsof n).
+    - intros z' o Hw. apply bool_decide_eq_true in Hw. apply HWL in Hw as (_ & _ & Hn). exact Hn.
+    - intros z' o Hm HM HnU. apply bool_decide_eq_true. apply HWL. simpl. split; [exact (HL z' Hm)|done].
+    - intros z a Hn Ha Hu.
+      assert (Hv : ∀ v, v ∈ valsof z → v ∈ concat (map valsof L)).
+      { intros v Hv. apply list_elem_of_In, in_concat. exists (valsof z).
         split; [apply in_map, list_elem_of_In, HL, Hn|by apply list_elem_of_In]. }
-      destruct a as [k c v|k c v|k E qs|k M qs j|k q0|k]; simpl in Hu; try done.
-      + apply Hu, Hv. apply list_elem_of_omap. by exists (CoIn k c v).
-      + apply Hu, Hv. apply list_elem_of_omap. by exists (CoMeas k M qs j).
-    - intros n Hn. pose proof (len_le_sum L n (HL n Hn)). lia.
+      destruct a as [t c v|t c v|t E qs|t M qs n|t q0|t]; simpl in Hu; try done.
+      + apply Hu, Hv. apply list_elem_of_omap. by exists (CoIn t c v).
+      + apply Hu, Hv. apply list_elem_of_omap. by exists (CoMeas t M qs n).
+    - intros z Hn. pose proof (len_le_sum L z (HL z Hn)). lia.
   Qed.
 End Data.
 
-Theorem lq_MenuTrunc `{QM : QuantumModel} (p q : proc * St) O Ch K : q.2 ≠ szero → (∀ k, K k ≠ KRec) →
+Theorem lq_MenuTrunc `{QM : QuantumModel} (p q : prog * St) O Ch K : q.2 ≠ szero → (∀ t, K t ≠ KRec) →
   MenuTrunc (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit p) (dinit q).
 Proof.
   intros Hq HKr I S r w ((T & HT & HO & -> & -> & HCh & HK) & HokT) Hrun.
   destruct (reps_exist p q T K) as (F & HF & Hrep). destruct meas_default as (Mo & HMo).
-  assert (Hnz : ∀ i x, x ∈ r i → x.2 ≠ weight_zero).
-  { intros i. apply (run_weights (SchedSts0 := mdlts (M := lq_menu O) (menu T) (S_T T)) Stay (λ ρ, ρ ≠ weight_zero)
+  assert (Hnz : ∀ n x, x ∈ r n → x.2 ≠ weight_zero).
+  { intros n. apply (run_weights (SchedSts0 := mdlts (M := lq_menu O) (menu T) (S_T T)) Stay (λ ρ, ρ ≠ weight_zero)
       (λ ρ c σ Δ Hg Hs, mstep_nonzero (MenuSts := lq_menu O) (menu T) ρ c σ Δ Hg Hs) (dinit q) r
       (run_word_is_run (M := lq_menu O) _ _ _ _ _ Hrun)).
     intros x ->%list_elem_of_singleton. exact Hq. }
@@ -228,8 +228,8 @@ Proof.
     exists (menu (tn VL reps wrapb f0 [] T)), (S_T (tn VL reps wrapb f0 [] T)).
     split; [apply (TN_real p q T Ch K O r w F Mo VL reps wrapb f0); assumption|].
     split; [apply (q_run p q T Ch K O r w F Mo VL reps wrapb f0); assumption|].
-    split; [intros i c ρ Hin; apply (q_Sstar p q T Ch K O r w F Mo VL reps wrapb f0) with (i := i) (ρ := ρ); assumption|].
-    intros r0 Hr0 i Hi.
+    split; [intros n c ρ Hin; apply (q_Sstar p q T Ch K O r w F Mo VL reps wrapb f0) with (n := n) (ρ := ρ); assumption|].
+    intros r0 Hr0 n Hi.
     apply (p_good p q T Ch K O r w F Mo VL reps wrapb f0 (LVp p q T Ch K O r w F Mo N) (CLp p q T Ch K O r w F Mo N) N);
       try assumption.
     + exact (LVp_pre p q T Ch K O r w F Mo N).
@@ -237,7 +237,7 @@ Proof.
     + exact (CLp_reach p q T Ch K O r w F Mo N).
 Qed.
 
-Theorem alt_free_obs_iff `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) :
+Theorem alt_free_obs_iff `{QM : QuantumModel} (DC : dep_choice) (p q : prog * St) :
   q.2 ≠ szero →
   (ctx_pre_sm_on Stay (obs_for p q) p q ↔ alt_free_obs p q).
 Proof.
@@ -246,6 +246,6 @@ Proof.
   apply (proj1 (alt_pre_obs_menu p q)); [exact (proj2 (alt_pre_obs_iff Stay DC p q) Hc)|exact HKr].
 Qed.
 
-End LqP.
+End Final.
 
 (* end hide *)

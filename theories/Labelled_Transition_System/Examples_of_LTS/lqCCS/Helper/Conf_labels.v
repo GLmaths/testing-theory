@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,32 +19,31 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
-(* * lqCCS: the congruence of the composition [ρ ∣ P], equality on the memory
-    and structural congruence on the program *)
+
+(* * lqCCS: the labels of the configurations, actions of the memory or of the program, with the coercions of both alphabets into their sum *)
 
 From Stdlib.Unicode Require Import Utf8.
-From stdpp Require Import base relations.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Congruence.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.lqCCS_prog.Congruence.
+From TestingTheory Require Import ActTau.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.lqCCS_prog.Syntax.
+From TestingTheory Require Import lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS.
 
-#[local] Open Scope lqccs_scope.
+(* The type of a label is read from the context, so that the coercions
+    below apply under [ActExt]. *)
+Arguments ActExt {A} & μ.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters} `{SA : StAlg}.
+(* ** The injections into a sum *)
 
-  Definition par_cgr : relation (St * proc) := λ c c', c.1 ≡ₘ c'.1 ∧ c.2 ≡* c'.2.
+Definition inj_l {A B : Type} (a : A) : A + B := inl a.
+Definition inj_r {A B : Type} (b : B) : A + B := inr b.
 
-  #[global] Instance par_cgr_equivalence : Equivalence par_cgr.
-  Proof.
-    split.
-    - intros c. split; reflexivity.
-    - intros c c' [Hm Hp]. split; by symmetry.
-    - intros c c' c'' [Hm Hp] [Hm' Hp']. split; by etrans.
-  Qed.
-End LqP.
+Section Sum_ActExt_Coercion.
+  Context `{lqP : lqCCS_Parameters} `{QM : QuantumModel}.
 
-Notation "c ≡ᶜ* c'" := (par_cgr c c') (at level 70) : lqccs_scope.
+  (* ** The labels: actions of the memory or of the program *)
 
-(* end hide *)
+  Definition mlbl : mem_action → mem_action + prog_action := inj_l.
+  Definition plbl : prog_action → mem_action + prog_action := inj_r.
+
+  Coercion mlbl : mem_action >-> Datatypes.sum.
+  Coercion plbl : prog_action >-> Datatypes.sum.
+End Sum_ActExt_Coercion.

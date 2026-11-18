@@ -30,7 +30,7 @@
     [adequacy]. *)
 
 From Stdlib Require Import List Arith Lia ChoiceFacts.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra.
+From TestingTheory Require Import lqCCS.General_definition.Algebra.
 Import ListNotations.
 Section Lifted.
 Context `{Alg}.

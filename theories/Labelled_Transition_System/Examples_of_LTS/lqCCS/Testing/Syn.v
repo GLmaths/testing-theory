@@ -28,19 +28,16 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
-
 Section Syn.
-  Context (TG : tag * okind → Prop) (OC IC : channel → Prop).
+  Context `{lqP : lqCCS_Parameters} (TG : tag * okind → Prop) (OC IC : channel → Prop).
 
-  Definition syn (Y : proc) : Prop :=
+  Definition syn (Y : prog) : Prop :=
     obsb Y = true ∧ (∀ x, x ∈ tagged Y → TG x) ∧ (∀ c, c ∈ out_chans Y → OC c) ∧ (∀ c, c ∈ in_chans Y → IC c).
 
   Definition gsyn (g : guard) : Prop :=
@@ -89,15 +86,15 @@ Section Syn.
     - apply Hi, elem_of_app. by right.
   Qed.
 
-  Lemma syn_subst k v P : syn P → syn (P ⁅ v // k ⁆ᵥ).
+  Lemma syn_subst t v P : syn P → syn (P ⁅ v // t ⁆ᵥ).
   Proof. unfold syn. by rewrite obsb_subst, tagged_subst, out_chans_subst, in_chans_subst. Qed.
 
-  Lemma syn_shiftv k P : syn P → syn (shiftv k P).
+  Lemma syn_shiftv t P : syn P → syn (shiftv t P).
   Proof. unfold syn. by rewrite obsb_shiftv, tagged_shiftv, out_chans_shiftv, in_chans_shiftv. Qed.
 
-  Lemma syn_sh 𝜆 Q : syn Q → syn (sh 𝜆 Q).
+  Lemma syn_sh π Q : syn Q → syn (sh π Q).
   Proof.
-    intros HQ. unfold sh. induction (prefix_binds 𝜆) as [|n IH]; simpl; [done|]. by apply syn_shiftv.
+    intros HQ. unfold sh. induction (prefix_binds π) as [|n IH]; simpl; [done|]. by apply syn_shiftv.
   Qed.
 
   Lemma syn_PG g : gsyn g → syn (PG g).
@@ -119,21 +116,21 @@ Section Syn.
     - apply syn_par_inv in HX as [HP HQ]. apply syn_par; auto.
   Qed.
 
-  Definition hsynP (h : prefix * proc) : Prop :=
-    syn h.2 ∧ TG (prefix_tagged h.1) ∧ (∀ t, h.1 ≠ (t ∶ 𝛕)) ∧ (∀ k c, h.1 = (k ∶ c ?) → IC c).
+  Definition hsynP (h : prefix * prog) : Prop :=
+    syn h.2 ∧ TG (prefix_tagged h.1) ∧ (∀ t', h.1 ≠ (t' ∶ 𝛕)) ∧ (∀ t c, h.1 = (t ∶ c ?) → IC c).
 
   Lemma gheads_syn g h : syn (PG g) → h ∈ gheads g → hsynP h.
   Proof.
-    induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl; intros (Ho & Ht & Hc & Hi) Hin.
+    induction g as [es| |π P|g1 IH1 g2 IH2]; simpl; intros (Ho & Ht & Hc & Hi) Hin.
     - by apply elem_of_nil in Hin.
     - by apply elem_of_nil in Hin.
     - apply list_elem_of_singleton in Hin. subst h. simpl in *.
       assert (HP : syn P).
-      { split; [by destruct 𝜆|]. split; [intros x Hx; apply Ht; by right|]. split; [done|].
-        intros c Hc0. apply Hi. destruct 𝜆; simpl; try done. by right. }
+      { split; [by destruct π|]. split; [intros x Hx; apply Ht; by right|]. split; [done|].
+        intros c Hc0. apply Hi. destruct π; simpl; try done. by right. }
       unfold hsynP. simpl. split; [done|]. split; [apply Ht; by left|].
-      split; [intros t E; subst 𝜆; simpl in Ho; discriminate Ho|].
-      intros k c E. subst 𝜆. apply Hi. simpl. by left.
+      split; [intros t' E; subst π; simpl in Ho; discriminate Ho|].
+      intros t c E. subst π. apply Hi. simpl. by left.
     - simpl in *. apply andb_prop in Ho as [[Ho1 Ho2]%andb_prop _].
       apply elem_of_app in Hin as [Hin|Hin]; [apply IH1|apply IH2]; try done.
       + split; [done|]. repeat split; intros x Hx; [apply Ht|apply Hc|apply Hi]; apply elem_of_app; by left.
@@ -161,13 +158,13 @@ Section Syn.
     intros HA Hd. induction vs as [|v vs IH]; simpl; [done|]. apply syn_ite; [|done]. by apply syn_shiftv.
   Qed.
 
-  Lemma gsyn_pre 𝜆 P :
-    (∀ t, 𝜆 ≠ (t ∶ 𝛕)) → TG (prefix_tagged 𝜆) → (∀ k c, 𝜆 = (k ∶ c ?) → IC c) → syn P → gsyn (𝜆 ∙ P).
+  Lemma gsyn_pre π P :
+    (∀ t', π ≠ (t' ∶ 𝛕)) → TG (prefix_tagged π) → (∀ t c, π = (t ∶ c ?) → IC c) → syn P → gsyn (π ∙ P).
   Proof.
-    intros Hnt Htg Hic (Ho & Ht & Hc & Hi). split; [destruct 𝜆; simpl; try done; by destruct (Hnt t)|].
+    intros Hnt Htg Hic (Ho & Ht & Hc & Hi). split; [destruct π; simpl; try done; by destruct (Hnt t)|].
     split; [done|]. split; [|split; [done|]].
     - intros x Hx. simpl in Hx. apply elem_of_cons in Hx as [->|Hx]; auto.
-    - intros c Hc0. destruct 𝜆; simpl in Hc0; auto. apply elem_of_cons in Hc0 as [->|Hc0]; [by eapply Hic|auto].
+    - intros c Hc0. destruct π; simpl in Hc0; auto. apply elem_of_cons in Hc0 as [->|Hc0]; [by eapply Hic|auto].
   Qed.
 
   Lemma gsyn_nil : gsyn 𝟘{ [] }.
@@ -183,19 +180,19 @@ Section Syn.
   Qed.
 
   Context (VL : list val) (reps : node → list offer) (wrapb : node → offer → bool).
-  Hypothesis Hreps : ∀ m o, o ∈ reps m → TG (off_tag o, off_kind o) ∧ ∀ k c, o = OffIn k c → IC c.
+  Hypothesis Hreps : ∀ z o, o ∈ reps z → TG (off_tag o, off_kind o) ∧ ∀ t c, o = OffIn t c → IC c.
 
-  Lemma kont_syn rec m o a Z' : (∀ m' X', syn X' → syn (rec m' X')) → syn Z' → syn (kont wrapb rec m o a Z').
-  Proof. intros Hrec HZ. unfold kont. destruct (wrapb m o); [apply syn_par; [apply syn_succ|done]|by apply Hrec]. Qed.
+  Lemma kont_syn rec z o a Z' : (∀ z' X', syn X' → syn (rec z' X')) → syn Z' → syn (kont wrapb rec z o a Z').
+  Proof. intros Hrec HZ. unfold kont. destruct (wrapb z o); [apply syn_par; [apply syn_succ|done]|by apply Hrec]. Qed.
 
-  Lemma dflt_syn m o D : syn D → syn (dflt wrapb m o D).
-  Proof. intros HD. unfold dflt. destruct (wrapb m o); [apply syn_par; [apply syn_succ|done]|done]. Qed.
+  Lemma dflt_syn z o D : syn D → syn (dflt wrapb z o D).
+  Proof. intros HD. unfold dflt. destruct (wrapb z o); [apply syn_par; [apply syn_succ|done]|done]. Qed.
 
-  Lemma hguard_syn rec m h g :
-    (∀ m' X', syn X' → syn (rec m' X')) → hsynP h → hguard VL wrapb rec m h = Some g → gsyn g.
+  Lemma hguard_syn rec z h g :
+    (∀ z' X', syn X' → syn (rec z' X')) → hsynP h → hguard VL wrapb rec z h = Some g → gsyn g.
   Proof.
-    intros Hrec (HD & Htg & Hnt & Hic) Hg. destruct h as [𝜆 D]. unfold hguard in Hg.
-    destruct 𝜆 as [t|t c|t U es|t M es|t e]; simpl in *.
+    intros Hrec (HD & Htg & Hnt & Hic) Hg. destruct h as [π D]. unfold hguard in Hg.
+    destruct π as [t|t c|t U es|t M es|t e]; simpl in *.
     - discriminate Hg.
     - injection Hg as <-. apply gsyn_pre; [done|done| |].
       + exact Hic.
@@ -209,29 +206,27 @@ Section Syn.
       apply gsyn_pre; [done|done|done|]. by apply kont_syn.
   Qed.
 
-  Lemma rg_syn m o g : o ∈ reps m → rg o = Some g → gsyn g.
+  Lemma rg_syn z o g : o ∈ reps z → rg o = Some g → gsyn g.
   Proof.
-    intros Hin Hg. destruct (Hreps m o Hin) as [Htg Hic].
-    destruct o as [k c v|k c|k U qs|k M qs|k q|k]; simpl in *; [discriminate Hg|injection Hg as <-..|discriminate Hg];
+    intros Hin Hg. destruct (Hreps z o Hin) as [Htg Hic].
+    destruct o as [t c v|t c|t U qs|t M qs|t q|t]; simpl in *; [discriminate Hg|injection Hg as <-..|discriminate Hg];
       (apply gsyn_pre; [done|done| |apply syn_succ]); try done.
-    intros k0 c0 [= <- <-]. by apply (Hic k c).
+    intros t0 c0 [= <- <-]. by apply (Hic t c).
   Qed.
 
-  Lemma hsum_syn rec m Z : (∀ m' X', syn X' → syn (rec m' X')) → syn Z → gsyn (hsum VL reps wrapb rec m Z).
+  Lemma hsum_syn rec z Z : (∀ z' X', syn X' → syn (rec z' X')) → syn Z → gsyn (hsum VL reps wrapb rec z Z).
   Proof.
     intros Hrec HZ. apply gsum_syn. intros g Hg.
     apply elem_of_app in Hg as [Hg|Hg]; apply list_elem_of_omap in Hg as (x & Hx & Eg).
-    - exact (hguard_syn rec m x g Hrec (heads_syn Z x HZ Hx) Eg).
-    - unfold repl in Hx. apply list_elem_of_filter in Hx as [_ Hx]. exact (rg_syn m x g Hx Eg).
+    - exact (hguard_syn rec z x g Hrec (heads_syn Z x HZ Hx) Eg).
+    - unfold repl in Hx. apply list_elem_of_filter in Hx as [_ Hx]. exact (rg_syn z x g Hx Eg).
   Qed.
 
-  Lemma tn_syn f : ∀ m X, syn X → syn (tn VL reps wrapb f m X).
+  Lemma tn_syn f : ∀ z X, syn X → syn (tn VL reps wrapb f z X).
   Proof.
-    induction f as [|f IH]; intros m X HX; simpl; [done|]. destruct (successb X); [done|].
+    induction f as [|f IH]; intros z X HX; simpl; [done|]. destruct (successb X); [done|].
     apply syn_par; [by apply syn_bagof|]. apply syn_PG, hsum_syn; [exact IH|by apply syn_ns].
   Qed.
 End Syn.
-
-End LqP.
 
 (* end hide *)

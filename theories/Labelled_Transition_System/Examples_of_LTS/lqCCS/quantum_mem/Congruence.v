@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,13 +19,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
+
 (* * The quantum memory: its congruence is the equality *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base relations.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.lqCCS_prog.Syntax.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.lqCCS_prog.Syntax.
 
 Definition mem_cgr `{StAlg} : relation St := eq.
 
@@ -34,5 +32,3 @@ Notation "ρ ≡ₘ ρ'" := (mem_cgr ρ ρ') (at level 70) : lqccs_scope.
 
 #[global] Instance mem_cgr_equivalence `{StAlg} : Equivalence mem_cgr.
 Proof. unfold mem_cgr. apply _. Qed.
-
-(* end hide *)

@@ -26,35 +26,35 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list numbers.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Tag_Lemmas.
+  Context `{lqP : lqCCS_Parameters}.
 
 (* ** Tags *)
 
-Lemma prefix_tagged_subst k v 𝜆 : prefix_tagged (prefix_subst k v 𝜆) = prefix_tagged 𝜆.
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tagged_subst i v π : prefix_tagged (prefix_subst i v π) = prefix_tagged π.
+Proof. by destruct π. Qed.
 
-Lemma prefix_tagged_shift k 𝜆 : prefix_tagged (prefix_shift k 𝜆) = prefix_tagged 𝜆.
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tagged_shift i π : prefix_tagged (prefix_shift i π) = prefix_tagged π.
+Proof. by destruct π. Qed.
 
-Lemma prefix_tagged_ren f 𝜆 : prefix_tagged (prefix_ren f 𝜆) = prefix_tagged 𝜆.
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tagged_ren f π : prefix_tagged (prefix_ren f π) = prefix_tagged π.
+Proof. by destruct π. Qed.
 
-Lemma tagged_subst k v P : tagged (P ⁅ v // k ⁆ᵥ) = tagged P
-with gtagged_gsubst k v g : gtagged (gsubst k v g) = gtagged g.
+Lemma tagged_subst i v P : tagged (P ⁅ v // i ⁆ᵥ) = tagged P
+with gtagged_gsubst i v g : gtagged (gsubst i v g) = gtagged g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !tagged_subst); try apply gtagged_gsubst.
   - destruct g; simpl; try done; try (by rewrite !gtagged_gsubst).
     by rewrite prefix_tagged_subst, tagged_subst.
 Qed.
 
-Lemma tagged_shiftv k P : tagged (shiftv k P) = tagged P
-with gtagged_gshiftv k g : gtagged (gshiftv k g) = gtagged g.
+Lemma tagged_shiftv i P : tagged (shiftv i P) = tagged P
+with gtagged_gshiftv i g : gtagged (gshiftv i g) = gtagged g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !tagged_shiftv); try apply gtagged_gshiftv.
   - destruct g; simpl; try done; try (by rewrite !gtagged_gshiftv).
@@ -72,17 +72,17 @@ Qed.
 Lemma tagged_shiftv_iter n P : tagged (Nat.iter n ⇧ᵥ P) = tagged P.
 Proof. induction n as [|n IH]; simpl; [done|]. by rewrite tagged_shiftv. Qed.
 
-Lemma tagged_rshift k P : tagged (rshift k P) = tagged P
-with gtagged_grshift k g : gtagged (grshift k g) = gtagged g.
+Lemma tagged_rshift i P : tagged (rshift i P) = tagged P
+with gtagged_grshift i g : gtagged (grshift i g) = gtagged g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !tagged_rshift); try apply gtagged_grshift. by case_decide.
   - destruct g; simpl; try done; try (by rewrite !gtagged_grshift). by rewrite tagged_rshift.
 Qed.
 
-Lemma tagged_pr_subst k P Q x :
-  x ∈ tagged (P ⁅ Q // k ⁆ₚ) → x ∈ tagged P ∨ x ∈ tagged Q
-with gtagged_gpr_subst k g Q x :
-  x ∈ gtagged (gpr_subst k g Q) → x ∈ gtagged g ∨ x ∈ tagged Q.
+Lemma tagged_pr_subst i P Q x :
+  x ∈ tagged (P ⁅ Q // i ⁆ₚ) → x ∈ tagged P ∨ x ∈ tagged Q
+with gtagged_gpr_subst i g Q x :
+  x ∈ gtagged (gpr_subst i g Q) → x ∈ gtagged g ∨ x ∈ tagged Q.
 Proof.
   - destruct P; simpl; intros Hx.
     + by left.
@@ -94,7 +94,7 @@ Proof.
     + repeat case_decide; [by right| |]; simpl in Hx; by apply elem_of_nil in Hx.
     + apply elem_of_cons in Hx as [->|Hx]; [left; by left|].
       apply tagged_pr_subst in Hx as [Hx|Hx]; [left; by right|right; by rewrite tagged_rshift in Hx].
-    + by apply (gtagged_gpr_subst k).
+    + by apply (gtagged_gpr_subst i).
   - destruct g; simpl; intros Hx.
     + by left.
     + by left.
@@ -104,8 +104,8 @@ Proof.
         left; apply elem_of_app; auto.
 Qed.
 
-Lemma prefix_tagged_tren f 𝜆 : prefix_tagged (prefix_tren f 𝜆) = (f (prefix_tagged 𝜆).1, (prefix_tagged 𝜆).2).
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tagged_tren f π : prefix_tagged (prefix_tren f π) = (f (prefix_tagged π).1, (prefix_tagged π).2).
+Proof. by destruct π. Qed.
 
 Lemma tagged_tren f P : tagged (tren f P) = map (λ x, (f x.1, x.2)) (tagged P)
 with gtagged_gtren f g : gtagged (gtren f g) = map (λ x, (f x.1, x.2)) (gtagged g).
@@ -128,63 +128,63 @@ Proof.
   - destruct g; simpl; try done. by rewrite !gsuccessb_gren.
 Qed.
 
-Lemma gsuccessb_gsubst k v g : gsuccessb (gsubst k v g) = gsuccessb g.
+Lemma gsuccessb_gsubst i v g : gsuccessb (gsubst i v g) = gsuccessb g.
 Proof. induction g; simpl; try done. by rewrite IHg1, IHg2. Qed.
 
 
-Lemma obsb_subst k v P : obsb (P ⁅ v // k ⁆ᵥ) = obsb P
-with gobsb_gsubst k v g : gobsb (gsubst k v g) = gobsb g.
+Lemma obsb_subst i v P : obsb (P ⁅ v // i ⁆ᵥ) = obsb P
+with gobsb_gsubst i v g : gobsb (gsubst i v g) = gobsb g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !obsb_subst); try apply gobsb_gsubst.
   - destruct g; simpl; try done; try (by rewrite !gobsb_gsubst, !gsuccessb_gsubst);
-      try (destruct 𝜆; simpl; try done; apply obsb_subst).
+      try (destruct π; simpl; try done; apply obsb_subst).
 Qed.
 
-Lemma out_chans_subst k v P : out_chans (P ⁅ v // k ⁆ᵥ) = out_chans P
-with gout_chans_gsubst k v g : gout_chans (gsubst k v g) = gout_chans g.
+Lemma out_chans_subst i v P : out_chans (P ⁅ v // i ⁆ᵥ) = out_chans P
+with gout_chans_gsubst i v g : gout_chans (gsubst i v g) = gout_chans g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !out_chans_subst); try apply out_chans_subst;
       try apply gout_chans_gsubst.
   - destruct g; simpl; try done; try (by rewrite !gout_chans_gsubst);
-      try (destruct 𝜆; simpl; apply out_chans_subst).
+      try (destruct π; simpl; apply out_chans_subst).
 Qed.
 
-Lemma in_chans_subst k v P : in_chans (P ⁅ v // k ⁆ᵥ) = in_chans P
-with gin_chans_gsubst k v g : gin_chans (gsubst k v g) = gin_chans g.
+Lemma in_chans_subst i v P : in_chans (P ⁅ v // i ⁆ᵥ) = in_chans P
+with gin_chans_gsubst i v g : gin_chans (gsubst i v g) = gin_chans g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !in_chans_subst); try apply in_chans_subst;
       try apply gin_chans_gsubst.
   - destruct g; simpl; try done; try (by rewrite !gin_chans_gsubst);
-      try (destruct 𝜆; simpl; try apply in_chans_subst; by rewrite in_chans_subst).
+      try (destruct π; simpl; try apply in_chans_subst; by rewrite in_chans_subst).
 Qed.
 
-Lemma gsuccessb_gshiftv k g : gsuccessb (gshiftv k g) = gsuccessb g.
-Proof. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
+Lemma gsuccessb_gshiftv i g : gsuccessb (gshiftv i g) = gsuccessb g.
+Proof. induction g as [es| |π P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
 
-Lemma obsb_shiftv k P : obsb (shiftv k P) = obsb P
-with gobsb_gshiftv k g : gobsb (gshiftv k g) = gobsb g.
+Lemma obsb_shiftv i P : obsb (shiftv i P) = obsb P
+with gobsb_gshiftv i g : gobsb (gshiftv i g) = gobsb g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !obsb_shiftv); try apply gobsb_gshiftv.
   - destruct g; simpl; try done; try (by rewrite !gobsb_gshiftv, !gsuccessb_gshiftv);
-      try (destruct 𝜆; simpl; try done; apply obsb_shiftv).
+      try (destruct π; simpl; try done; apply obsb_shiftv).
 Qed.
 
-Lemma out_chans_shiftv k P : out_chans (shiftv k P) = out_chans P
-with gout_chans_gshiftv k g : gout_chans (gshiftv k g) = gout_chans g.
+Lemma out_chans_shiftv i P : out_chans (shiftv i P) = out_chans P
+with gout_chans_gshiftv i g : gout_chans (gshiftv i g) = gout_chans g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !out_chans_shiftv); try apply out_chans_shiftv;
       try apply gout_chans_gshiftv.
   - destruct g; simpl; try done; try (by rewrite !gout_chans_gshiftv);
-      try (destruct 𝜆; simpl; apply out_chans_shiftv).
+      try (destruct π; simpl; apply out_chans_shiftv).
 Qed.
 
-Lemma in_chans_shiftv k P : in_chans (shiftv k P) = in_chans P
-with gin_chans_gshiftv k g : gin_chans (gshiftv k g) = gin_chans g.
+Lemma in_chans_shiftv i P : in_chans (shiftv i P) = in_chans P
+with gin_chans_gshiftv i g : gin_chans (gshiftv i g) = gin_chans g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !in_chans_shiftv); try apply in_chans_shiftv;
       try apply gin_chans_gshiftv.
   - destruct g; simpl; try done; try (by rewrite !gin_chans_gshiftv);
-      try (destruct 𝜆; simpl; try apply in_chans_shiftv; by rewrite in_chans_shiftv).
+      try (destruct π; simpl; try apply in_chans_shiftv; by rewrite in_chans_shiftv).
 Qed.
 
 (* ** Recursive observers *)
@@ -197,27 +197,27 @@ Proof.
     + apply andb_prop in H as [H1 H2]. by rewrite (obsrb_obsb _ H1), (obsrb_obsb _ H2).
     + by apply gobsrb_gobsb.
   - destruct g; simpl; intros H; try done.
-    + destruct 𝜆; try done; by apply obsrb_obsb.
+    + destruct π; try done; by apply obsrb_obsb.
     + apply andb_prop in H as [[H1 H2]%andb_prop H3]. by rewrite (gobsrb_gobsb _ H1), (gobsrb_gobsb _ H2), H3.
 Qed.
 
 Lemma obsr_obs T : obs T → obsr T.
 Proof. intros [H1 H2]. split; [by apply obsrb_obsb|done]. Qed.
 
-Lemma obsrb_subst k v P : obsrb (P ⁅ v // k ⁆ᵥ) = obsrb P
-with gobsrb_gsubst k v g : gobsrb (gsubst k v g) = gobsrb g.
+Lemma obsrb_subst i v P : obsrb (P ⁅ v // i ⁆ᵥ) = obsrb P
+with gobsrb_gsubst i v g : gobsrb (gsubst i v g) = gobsrb g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !obsrb_subst); try apply gobsrb_gsubst.
   - destruct g; simpl; try done; try (by rewrite !gobsrb_gsubst, !gsuccessb_gsubst);
-      try (destruct 𝜆; simpl; try done; apply obsrb_subst).
+      try (destruct π; simpl; try done; apply obsrb_subst).
 Qed.
 
-Lemma obsrb_shiftv k P : obsrb (shiftv k P) = obsrb P
-with gobsrb_gshiftv k g : gobsrb (gshiftv k g) = gobsrb g.
+Lemma obsrb_shiftv i P : obsrb (shiftv i P) = obsrb P
+with gobsrb_gshiftv i g : gobsrb (gshiftv i g) = gobsrb g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !obsrb_shiftv); try apply gobsrb_gshiftv.
   - destruct g; simpl; try done; try (by rewrite !gobsrb_gshiftv, !gsuccessb_gshiftv);
-      try (destruct 𝜆; simpl; try done; apply obsrb_shiftv).
+      try (destruct π; simpl; try done; apply obsrb_shiftv).
 Qed.
 
 Lemma obsrb_shiftv_iter n P : obsrb (Nat.iter n ⇧ᵥ P) = obsrb P.
@@ -230,14 +230,14 @@ Lemma in_chans_shiftv_iter n P : in_chans (Nat.iter n ⇧ᵥ P) = in_chans P.
 Proof. induction n as [|n IH]; simpl; [done|]. by rewrite in_chans_shiftv. Qed.
 
 Lemma gsuccessb_gtren f g : gsuccessb (gtren f g) = gsuccessb g.
-Proof. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
+Proof. induction g as [es| |π P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
 
 Lemma obsrb_tren f P : obsrb (tren f P) = obsrb P
 with gobsrb_gtren f g : gobsrb (gtren f g) = gobsrb g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !obsrb_tren); try apply gobsrb_gtren.
   - destruct g; simpl; try done; try (by rewrite !gobsrb_gtren, !gsuccessb_gtren);
-      try (destruct 𝜆; simpl; try done; apply obsrb_tren).
+      try (destruct π; simpl; try done; apply obsrb_tren).
 Qed.
 
 Lemma out_chans_tren f P : out_chans (tren f P) = out_chans P
@@ -246,7 +246,7 @@ Proof.
   - destruct P; simpl; try done; try (by rewrite !out_chans_tren); try apply out_chans_tren;
       try apply gout_chans_gtren.
   - destruct g; simpl; try done; try (by rewrite !gout_chans_gtren);
-      try (destruct 𝜆; simpl; apply out_chans_tren).
+      try (destruct π; simpl; apply out_chans_tren).
 Qed.
 
 Lemma in_chans_tren f P : in_chans (tren f P) = in_chans P
@@ -255,43 +255,43 @@ Proof.
   - destruct P; simpl; try done; try (by rewrite !in_chans_tren); try apply in_chans_tren;
       try apply gin_chans_gtren.
   - destruct g; simpl; try done; try (by rewrite !gin_chans_gtren);
-      try (destruct 𝜆; simpl; try apply in_chans_tren; by rewrite in_chans_tren).
+      try (destruct π; simpl; try apply in_chans_tren; by rewrite in_chans_tren).
 Qed.
 
-Lemma gsuccessb_grshift k g : gsuccessb (grshift k g) = gsuccessb g.
-Proof. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
+Lemma gsuccessb_grshift i g : gsuccessb (grshift i g) = gsuccessb g.
+Proof. induction g as [es| |π P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
 
-Lemma obsrb_rshift k P : obsrb (rshift k P) = obsrb P
-with gobsrb_grshift k g : gobsrb (grshift k g) = gobsrb g.
+Lemma obsrb_rshift i P : obsrb (rshift i P) = obsrb P
+with gobsrb_grshift i g : gobsrb (grshift i g) = gobsrb g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !obsrb_rshift); try apply gobsrb_grshift. by case_decide.
   - destruct g; simpl; try done; try (by rewrite !gobsrb_grshift, !gsuccessb_grshift);
-      try (destruct 𝜆; simpl; try done; apply obsrb_rshift).
+      try (destruct π; simpl; try done; apply obsrb_rshift).
 Qed.
 
-Lemma out_chans_rshift k P : out_chans (rshift k P) = out_chans P
-with gout_chans_grshift k g : gout_chans (grshift k g) = gout_chans g.
+Lemma out_chans_rshift i P : out_chans (rshift i P) = out_chans P
+with gout_chans_grshift i g : gout_chans (grshift i g) = gout_chans g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !out_chans_rshift); try apply out_chans_rshift;
       try apply gout_chans_grshift. by case_decide.
   - destruct g; simpl; try done; try (by rewrite !gout_chans_grshift);
-      try (destruct 𝜆; simpl; apply out_chans_rshift).
+      try (destruct π; simpl; apply out_chans_rshift).
 Qed.
 
-Lemma in_chans_rshift k P : in_chans (rshift k P) = in_chans P
-with gin_chans_grshift k g : gin_chans (grshift k g) = gin_chans g.
+Lemma in_chans_rshift i P : in_chans (rshift i P) = in_chans P
+with gin_chans_grshift i g : gin_chans (grshift i g) = gin_chans g.
 Proof.
   - destruct P; simpl; try done; try (by rewrite !in_chans_rshift); try apply in_chans_rshift;
       try apply gin_chans_grshift. by case_decide.
   - destruct g; simpl; try done; try (by rewrite !gin_chans_grshift);
-      try (destruct 𝜆; simpl; try apply in_chans_rshift; by rewrite in_chans_rshift).
+      try (destruct π; simpl; try apply in_chans_rshift; by rewrite in_chans_rshift).
 Qed.
 
-Lemma gsuccessb_gpr_subst k g Q : gsuccessb (gpr_subst k g Q) = gsuccessb g.
-Proof. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
+Lemma gsuccessb_gpr_subst i g Q : gsuccessb (gpr_subst i g Q) = gsuccessb g.
+Proof. induction g as [es| |π P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
 
-Lemma obsrb_pr_subst k P Q : obsrb P = true → obsrb Q = true → obsrb (P ⁅ Q // k ⁆ₚ) = true
-with gobsrb_gpr_subst k g Q : gobsrb g = true → obsrb Q = true → gobsrb (gpr_subst k g Q) = true.
+Lemma obsrb_pr_subst i P Q : obsrb P = true → obsrb Q = true → obsrb (P ⁅ Q // i ⁆ₚ) = true
+with gobsrb_gpr_subst i g Q : gobsrb g = true → obsrb Q = true → gobsrb (gpr_subst i g Q) = true.
 Proof.
   - destruct P; simpl; intros HP HQ; try done.
     + apply andb_prop in HP as [H1 H2]. by rewrite (obsrb_pr_subst _ _ _ H1 HQ), (obsrb_pr_subst _ _ _ H2 HQ).
@@ -300,65 +300,65 @@ Proof.
     + apply obsrb_pr_subst; [done|by rewrite obsrb_rshift].
     + by apply gobsrb_gpr_subst.
   - destruct g; simpl; intros Hg HQ; try done.
-    + destruct 𝜆; try done; apply obsrb_pr_subst; try done; by rewrite obsrb_shiftv_iter.
+    + destruct π; try done; apply obsrb_pr_subst; try done; by rewrite obsrb_shiftv_iter.
     + apply andb_prop in Hg as [[H1 H2]%andb_prop H3].
       by rewrite (gobsrb_gpr_subst _ _ _ H1 HQ), (gobsrb_gpr_subst _ _ _ H2 HQ), !gsuccessb_gpr_subst, H3.
 Qed.
 
-Lemma out_chans_pr_subst k P Q c :
-  obsrb P = true → c ∈ out_chans (P ⁅ Q // k ⁆ₚ) → c ∈ out_chans P ∨ c ∈ out_chans Q
-with gout_chans_gpr_subst k g Q c :
-  gobsrb g = true → c ∈ gout_chans (gpr_subst k g Q) → c ∈ gout_chans g ∨ c ∈ out_chans Q.
+Lemma out_chans_pr_subst i P Q c :
+  obsrb P = true → c ∈ out_chans (P ⁅ Q // i ⁆ₚ) → c ∈ out_chans P ∨ c ∈ out_chans Q
+with gout_chans_gpr_subst i g Q c :
+  gobsrb g = true → c ∈ gout_chans (gpr_subst i g Q) → c ∈ gout_chans g ∨ c ∈ out_chans Q.
 Proof.
   - destruct P; simpl; intros HP Hc; try done.
     + by left.
     + apply andb_prop in HP as [H1 H2].
-      apply elem_of_app in Hc as [Hc|Hc]; [apply (out_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]|
-        apply (out_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
+      apply elem_of_app in Hc as [Hc|Hc]; [apply (out_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]|
+        apply (out_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
     + apply andb_prop in HP as [H1 H2].
-      apply elem_of_app in Hc as [Hc|Hc]; [apply (out_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]|
-        apply (out_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
+      apply elem_of_app in Hc as [Hc|Hc]; [apply (out_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]|
+        apply (out_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
     + repeat case_decide; [by right| |]; simpl in Hc; by apply elem_of_nil in Hc.
     + destruct (out_chans_pr_subst _ P _ c HP Hc) as [H|H]; [by left|right; by rewrite out_chans_rshift in H].
-    + by apply (gout_chans_gpr_subst k).
-  - destruct g as [es| |𝜆 P|g1 g2]; simpl; intros Hg Hc.
+    + by apply (gout_chans_gpr_subst i).
+  - destruct g as [es| |π P|g1 g2]; simpl; intros Hg Hc.
     + by apply elem_of_nil in Hc.
     + by apply elem_of_nil in Hc.
-    + destruct 𝜆; try done; apply (out_chans_pr_subst k) in Hc as [Hc|Hc]; try done; auto;
+    + destruct π; try done; apply (out_chans_pr_subst i) in Hc as [Hc|Hc]; try done; auto;
         rewrite out_chans_shiftv_iter in Hc; auto.
     + apply andb_prop in Hg as [[H1 H2]%andb_prop _].
-      apply elem_of_app in Hc as [Hc|Hc]; [apply (gout_chans_gpr_subst k) in Hc as [Hc|Hc]; [| |done]|
-        apply (gout_chans_gpr_subst k) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
+      apply elem_of_app in Hc as [Hc|Hc]; [apply (gout_chans_gpr_subst i) in Hc as [Hc|Hc]; [| |done]|
+        apply (gout_chans_gpr_subst i) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
 Qed.
 
-Lemma in_chans_pr_subst k P Q c :
-  obsrb P = true → c ∈ in_chans (P ⁅ Q // k ⁆ₚ) → c ∈ in_chans P ∨ c ∈ in_chans Q
-with gin_chans_gpr_subst k g Q c :
-  gobsrb g = true → c ∈ gin_chans (gpr_subst k g Q) → c ∈ gin_chans g ∨ c ∈ in_chans Q.
+Lemma in_chans_pr_subst i P Q c :
+  obsrb P = true → c ∈ in_chans (P ⁅ Q // i ⁆ₚ) → c ∈ in_chans P ∨ c ∈ in_chans Q
+with gin_chans_gpr_subst i g Q c :
+  gobsrb g = true → c ∈ gin_chans (gpr_subst i g Q) → c ∈ gin_chans g ∨ c ∈ in_chans Q.
 Proof.
   - destruct P; simpl; intros HP Hc; try (by apply elem_of_nil in Hc); try done.
     + apply andb_prop in HP as [H1 H2].
-      apply elem_of_app in Hc as [Hc|Hc]; [apply (in_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]|
-        apply (in_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
+      apply elem_of_app in Hc as [Hc|Hc]; [apply (in_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]|
+        apply (in_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
     + apply andb_prop in HP as [H1 H2].
-      apply elem_of_app in Hc as [Hc|Hc]; [apply (in_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]|
-        apply (in_chans_pr_subst k) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
+      apply elem_of_app in Hc as [Hc|Hc]; [apply (in_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]|
+        apply (in_chans_pr_subst i) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
     + repeat case_decide; [by right| |]; simpl in Hc; by apply elem_of_nil in Hc.
     + destruct (in_chans_pr_subst _ P _ c HP Hc) as [H|H]; [by left|right; by rewrite in_chans_rshift in H].
-    + by apply (gin_chans_gpr_subst k).
-  - destruct g as [es| |𝜆 P|g1 g2]; simpl; intros Hg Hc.
+    + by apply (gin_chans_gpr_subst i).
+  - destruct g as [es| |π P|g1 g2]; simpl; intros Hg Hc.
     + by apply elem_of_nil in Hc.
     + by apply elem_of_nil in Hc.
-    + destruct 𝜆; simpl in Hg, Hc |- *; try done.
-      1: apply elem_of_cons in Hc as [->|Hc]; [left; by left|]; apply (in_chans_pr_subst k) in Hc as [Hc|Hc];
+    + destruct π; simpl in Hg, Hc |- *; try done.
+      1: apply elem_of_cons in Hc as [->|Hc]; [left; by left|]; apply (in_chans_pr_subst i) in Hc as [Hc|Hc];
            [left; by right| |done]; rewrite ?in_chans_shiftv in Hc; right; exact Hc.
-      all: apply (in_chans_pr_subst k) in Hc as [Hc|Hc]; [by left| |done]; rewrite ?in_chans_shiftv in Hc;
+      all: apply (in_chans_pr_subst i) in Hc as [Hc|Hc]; [by left| |done]; rewrite ?in_chans_shiftv in Hc;
            right; exact Hc.
     + apply andb_prop in Hg as [[H1 H2]%andb_prop _].
-      apply elem_of_app in Hc as [Hc|Hc]; [apply (gin_chans_gpr_subst k) in Hc as [Hc|Hc]; [| |done]|
-        apply (gin_chans_gpr_subst k) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
+      apply elem_of_app in Hc as [Hc|Hc]; [apply (gin_chans_gpr_subst i) in Hc as [Hc|Hc]; [| |done]|
+        apply (gin_chans_gpr_subst i) in Hc as [Hc|Hc]; [| |done]]; auto; left; apply elem_of_app; auto.
 Qed.
 
-End LqP.
+End Tag_Lemmas.
 
 (* end hide *)

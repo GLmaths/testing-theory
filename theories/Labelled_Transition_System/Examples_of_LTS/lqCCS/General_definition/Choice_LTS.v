@@ -37,9 +37,9 @@ Arguments clts_step {S C A _} _ _ _ _.
 Declare Scope choice_lts_scope.
 Delimit Scope choice_lts_scope with clts.
 
-Notation "P ⟶{ l }[ s ] P'" := (clts_step P s l P')
-  (at level 70, format "P  ⟶{ l }[ s ]  P'") : choice_lts_scope.
-Notation "P ↛{ l }[ s ] P'" := (¬ clts_step P s l P')
-  (at level 70, format "P  ↛{ l }[ s ]  P'") : choice_lts_scope.
+Notation "P ⟶{ 𝜆 }[ k ] P'" := (clts_step P k 𝜆 P')
+  (at level 70, format "P  ⟶{ 𝜆 }[ k ]  P'") : choice_lts_scope.
+Notation "P ↛{ 𝜆 }[ k ] P'" := (¬ clts_step P k 𝜆 P')
+  (at level 70, format "P  ↛{ 𝜆 }[ k ]  P'") : choice_lts_scope.
 
 (* end hide *)

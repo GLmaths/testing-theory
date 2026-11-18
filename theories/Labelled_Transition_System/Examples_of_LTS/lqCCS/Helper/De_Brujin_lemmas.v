@@ -29,8 +29,8 @@ From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax.
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section De_Brujin_Lemmas.
+  Context `{lqP : lqCCS_Parameters}.
 
 (* ** Facts on renamings *)
 
@@ -70,14 +70,14 @@ Proof. intros Hf [c|i] [c'|j]; simpl; intros [=]; subst; [done|]. f_equal. by ap
 Lemma lift_inj f : (∀ i j, f i = f j → i = j) → ∀ i j, lift f i = lift f j → i = j.
 Proof. intros Hf [|i] [|j]; simpl; intros [=]; subst; [done|]. f_equal. by apply Hf. Qed.
 
-Lemma prefix_ren_ext f g 𝜆 : (∀ i, f i = g i) → prefix_ren f 𝜆 = prefix_ren g 𝜆.
-Proof. intros H. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite (ren_chan_ext f g). Qed.
+Lemma prefix_ren_ext f g π : (∀ i, f i = g i) → prefix_ren f π = prefix_ren g π.
+Proof. intros H. destruct π; simpl; [done| |done|done|done]. by rewrite (ren_chan_ext f g). Qed.
 
 Lemma ren_ext_all :
   (∀ P f g, (∀ i, f i = g i) → ren f P = ren g P)
   ∧ (∀ h f g, (∀ i, f i = g i) → gren f h = gren g h).
 Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  apply prog_guard_ind; simpl; intros; try (f_equal; auto; done).
   - by rewrite (ren_chan_ext f g).
   - f_equal. apply H. by apply lift_ext.
   - f_equal; [by apply prefix_ren_ext | by apply H].
@@ -86,13 +86,13 @@ Qed.
 Lemma ren_ext f g P : (∀ i, f i = g i) → ren f P = ren g P.
 Proof. apply (proj1 ren_ext_all). Qed.
 
-Lemma prefix_ren_comp f g 𝜆 : prefix_ren f (prefix_ren g 𝜆) = prefix_ren (f ∘ g) 𝜆.
-Proof. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite ren_chan_comp. Qed.
+Lemma prefix_ren_comp f g π : prefix_ren f (prefix_ren g π) = prefix_ren (f ∘ g) π.
+Proof. destruct π; simpl; [done| |done|done|done]. by rewrite ren_chan_comp. Qed.
 
 Lemma ren_comp_all :
   (∀ P f g, ren f (ren g P) = ren (f ∘ g) P) ∧ (∀ h f g, gren f (gren g h) = gren (f ∘ g) h).
 Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  apply prog_guard_ind; simpl; intros; try (f_equal; auto; done).
   - by rewrite ren_chan_comp.
   - f_equal. rewrite H. apply ren_ext, lift_comp.
   - f_equal; [apply prefix_ren_comp | apply H].
@@ -103,10 +103,10 @@ Proof. apply (proj1 ren_comp_all). Qed.
 
 Lemma ren_id_all : (∀ P, ren id P = P) ∧ (∀ h, gren id h = h).
 Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  apply prog_guard_ind; simpl; intros; try (f_equal; auto; done).
   - by rewrite ren_chan_id.
   - f_equal. rewrite <- H at 2. apply ren_ext, lift_id.
-  - f_equal; [|done]. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite ren_chan_id.
+  - f_equal; [|done]. destruct π; simpl; [done| |done|done|done]. by rewrite ren_chan_id.
 Qed.
 
 Lemma ren_id P : ren id P = P.
@@ -121,29 +121,29 @@ Proof.
   rewrite ren_comp. rewrite <- (ren_id P) at 2. apply ren_ext. intros i. apply swap01_invol.
 Qed.
 
-Lemma prefix_ren_subst f k v 𝜆 :
-  prefix_ren f (prefix_subst k v 𝜆) = prefix_subst k v (prefix_ren f 𝜆).
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_ren_subst f i v π :
+  prefix_ren f (prefix_subst i v π) = prefix_subst i v (prefix_ren f π).
+Proof. by destruct π. Qed.
 
-Lemma prefix_ren_shift f k 𝜆 : prefix_ren f (prefix_shift k 𝜆) = prefix_shift k (prefix_ren f 𝜆).
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_ren_shift f i π : prefix_ren f (prefix_shift i π) = prefix_shift i (prefix_ren f π).
+Proof. by destruct π. Qed.
 
-Lemma prefix_ren_binds f 𝜆 : prefix_binds (prefix_ren f 𝜆) = prefix_binds 𝜆.
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_ren_binds f π : prefix_binds (prefix_ren f π) = prefix_binds π.
+Proof. by destruct π. Qed.
 
 Lemma ren_subst :
-  (∀ P f k v, ren f (P ⁅ v // k ⁆ᵥ) = (ren f P) ⁅ v // k ⁆ᵥ)
-  ∧ (∀ g f k v, gren f (gsubst k v g) = gsubst k v (gren f g)).
+  (∀ P f i v, ren f (P ⁅ v // i ⁆ᵥ) = (ren f P) ⁅ v // i ⁆ᵥ)
+  ∧ (∀ g f i v, gren f (gsubst i v g) = gsubst i v (gren f g)).
 Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
+  apply prog_guard_ind; simpl; intros; try congruence.
   rewrite prefix_ren_subst, prefix_ren_binds. congruence.
 Qed.
 
 Lemma ren_shiftv :
-  (∀ P f k, ren f (shiftv k P) = shiftv k (ren f P))
-  ∧ (∀ g f k, gren f (gshiftv k g) = gshiftv k (gren f g)).
+  (∀ P f i, ren f (shiftv i P) = shiftv i (ren f P))
+  ∧ (∀ g f i, gren f (gshiftv i g) = gshiftv i (gren f g)).
 Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
+  apply prog_guard_ind; simpl; intros; try congruence.
   rewrite prefix_ren_shift, prefix_ren_binds. congruence.
 Qed.
 
@@ -151,15 +151,15 @@ Lemma ren_shiftv_iter n f Q : ren f (Nat.iter n ⇧ᵥ Q) = Nat.iter n ⇧ᵥ (r
 Proof. induction n; simpl; [done|]. by rewrite (proj1 ren_shiftv), IHn. Qed.
 
 Lemma ren_rshift :
-  (∀ P f k, ren f (rshift k P) = rshift k (ren f P))
-  ∧ (∀ g f k, gren f (grshift k g) = grshift k (gren f g)).
-Proof. apply proc_guard_ind; simpl; intros; try congruence. by case_decide. Qed.
+  (∀ P f i, ren f (rshift i P) = rshift i (ren f P))
+  ∧ (∀ g f i, gren f (grshift i g) = grshift i (gren f g)).
+Proof. apply prog_guard_ind; simpl; intros; try congruence. by case_decide. Qed.
 
 Lemma ren_pr_subst :
-  (∀ P f k Q, ren f (P ⁅ Q // k ⁆ₚ) = (ren f P) ⁅ ren f Q // k ⁆ₚ)
-  ∧ (∀ g f k Q, gren f (gpr_subst k g Q) = gpr_subst k (gren f g) (ren f Q)).
+  (∀ P f i Q, ren f (P ⁅ Q // i ⁆ₚ) = (ren f P) ⁅ ren f Q // i ⁆ₚ)
+  ∧ (∀ g f i Q, gren f (gpr_subst i g Q) = gpr_subst i (gren f g) (ren f Q)).
 Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
+  apply prog_guard_ind; simpl; intros; try congruence.
   - f_equal. rewrite H. f_equal. apply ren_lift_S.
   - by repeat case_decide.
   - by rewrite H, (proj1 ren_rshift).
@@ -167,36 +167,36 @@ Proof.
 Qed.
 
 Lemma size_ren : (∀ P f, size (ren f P) = size P) ∧ (∀ g f, gsize (gren f g) = gsize g).
-Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
+Proof. apply prog_guard_ind; simpl; intros; congruence. Qed.
 
 (* ** Tag renaming and indices *)
 
-Lemma prefix_tren_binds f 𝜆 : prefix_binds (prefix_tren f 𝜆) = prefix_binds 𝜆.
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tren_binds f π : prefix_binds (prefix_tren f π) = prefix_binds π.
+Proof. by destruct π. Qed.
 
-Lemma prefix_tren_subst f k v 𝜆 :
-  prefix_tren f (prefix_subst k v 𝜆) = prefix_subst k v (prefix_tren f 𝜆).
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tren_subst f i v π :
+  prefix_tren f (prefix_subst i v π) = prefix_subst i v (prefix_tren f π).
+Proof. by destruct π. Qed.
 
-Lemma prefix_tren_shift f k 𝜆 : prefix_tren f (prefix_shift k 𝜆) = prefix_shift k (prefix_tren f 𝜆).
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tren_shift f i π : prefix_tren f (prefix_shift i π) = prefix_shift i (prefix_tren f π).
+Proof. by destruct π. Qed.
 
-Lemma prefix_tren_ren f g 𝜆 : prefix_tren f (prefix_ren g 𝜆) = prefix_ren g (prefix_tren f 𝜆).
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_tren_ren f g π : prefix_tren f (prefix_ren g π) = prefix_ren g (prefix_tren f π).
+Proof. by destruct π. Qed.
 
 Lemma tren_subst :
-  (∀ P f k v, tren f (P ⁅ v // k ⁆ᵥ) = (tren f P) ⁅ v // k ⁆ᵥ)
-  ∧ (∀ g f k v, gtren f (gsubst k v g) = gsubst k v (gtren f g)).
+  (∀ P f i v, tren f (P ⁅ v // i ⁆ᵥ) = (tren f P) ⁅ v // i ⁆ᵥ)
+  ∧ (∀ g f i v, gtren f (gsubst i v g) = gsubst i v (gtren f g)).
 Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
+  apply prog_guard_ind; simpl; intros; try congruence.
   rewrite prefix_tren_subst, prefix_tren_binds. congruence.
 Qed.
 
 Lemma tren_shiftv :
-  (∀ P f k, tren f (shiftv k P) = shiftv k (tren f P))
-  ∧ (∀ g f k, gtren f (gshiftv k g) = gshiftv k (gtren f g)).
+  (∀ P f i, tren f (shiftv i P) = shiftv i (tren f P))
+  ∧ (∀ g f i, gtren f (gshiftv i g) = gshiftv i (gtren f g)).
 Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
+  apply prog_guard_ind; simpl; intros; try congruence.
   rewrite prefix_tren_shift, prefix_tren_binds. congruence.
 Qed.
 
@@ -207,20 +207,20 @@ Lemma tren_ren :
   (∀ P f h, tren f (ren h P) = ren h (tren f P))
   ∧ (∀ g f h, gtren f (gren h g) = gren h (gtren f g)).
 Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
+  apply prog_guard_ind; simpl; intros; try congruence.
   rewrite prefix_tren_ren. congruence.
 Qed.
 
 Lemma tren_rshift :
-  (∀ P f k, tren f (rshift k P) = rshift k (tren f P))
-  ∧ (∀ g f k, gtren f (grshift k g) = grshift k (gtren f g)).
-Proof. apply proc_guard_ind; simpl; intros; try congruence. by case_decide. Qed.
+  (∀ P f i, tren f (rshift i P) = rshift i (tren f P))
+  ∧ (∀ g f i, gtren f (grshift i g) = grshift i (gtren f g)).
+Proof. apply prog_guard_ind; simpl; intros; try congruence. by case_decide. Qed.
 
 Lemma tren_pr_subst :
-  (∀ P f k Q, tren f (P ⁅ Q // k ⁆ₚ) = (tren f P) ⁅ tren f Q // k ⁆ₚ)
-  ∧ (∀ g f k Q, gtren f (gpr_subst k g Q) = gpr_subst k (gtren f g) (tren f Q)).
+  (∀ P f i Q, tren f (P ⁅ Q // i ⁆ₚ) = (tren f P) ⁅ tren f Q // i ⁆ₚ)
+  ∧ (∀ g f i Q, gtren f (gpr_subst i g Q) = gpr_subst i (gtren f g) (tren f Q)).
 Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
+  apply prog_guard_ind; simpl; intros; try congruence.
   - f_equal. rewrite H. f_equal. apply (proj1 tren_ren).
   - by repeat case_decide.
   - by rewrite H, (proj1 tren_rshift).
@@ -238,7 +238,7 @@ Proof. rewrite !ren_comp. apply ren_ext. intros i. apply lift_lift_swap01. Qed.
 
 (* ** Substitution and shift of values *)
 
-Lemma exp_subst_closed k v e w : 〚 e 〛 = w → exp_subst k v e = e.
+Lemma exp_subst_closed i v e w : 〚 e 〛 = w → exp_subst i v e = e.
 Proof.
   revert w. induction e; intros w He; simpl in He |- *; try done.
   all: repeat (destruct (eval _) as [[]|] eqn:? in He; try discriminate);
@@ -247,7 +247,7 @@ Proof.
     end; done.
 Qed.
 
-Lemma exp_shift_closed k e w : 〚 e 〛 = w → exp_shift k e = e.
+Lemma exp_shift_closed i e w : 〚 e 〛 = w → exp_shift i e = e.
 Proof.
   revert w. induction e; intros w He; simpl in He |- *; try done.
   all: repeat (destruct (eval _) as [[]|] eqn:? in He; try discriminate);
@@ -256,7 +256,7 @@ Proof.
     end; done.
 Qed.
 
-Lemma exp_subst_shift k v e : exp_subst k v (exp_shift k e) = e.
+Lemma exp_subst_shift j v e : exp_subst j v (exp_shift j e) = e.
 Proof.
   induction e as [i|w|e IH|e1 IH1 e2 IH2|e1 IH1 e2 IH2|e1 IH1 e2 IH2]; simpl; try congruence.
   case_decide as Hk; simpl.
@@ -264,17 +264,17 @@ Proof.
   - case_decide as Ha; [lia|]. case_decide as Hb; [done|lia].
 Qed.
 
-Lemma exps_subst_shift k v (es : list exp) : map (exp_subst k v) (map (exp_shift k) es) = es.
+Lemma exps_subst_shift i v (es : list exp) : map (exp_subst i v) (map (exp_shift i) es) = es.
 Proof. induction es as [|e es IH]; [done|]. simpl. by rewrite exp_subst_shift, IH. Qed.
 
-Lemma prefix_subst_shift k v 𝜆 : prefix_subst k v (prefix_shift k 𝜆) = 𝜆.
-Proof. destruct 𝜆; simpl; by rewrite ?exps_subst_shift, ?exp_subst_shift. Qed.
+Lemma prefix_subst_shift i v π : prefix_subst i v (prefix_shift i π) = π.
+Proof. destruct π; simpl; by rewrite ?exps_subst_shift, ?exp_subst_shift. Qed.
 
-Lemma prefix_binds_shift k 𝜆 : prefix_binds (prefix_shift k 𝜆) = prefix_binds 𝜆.
-Proof. by destruct 𝜆. Qed.
+Lemma prefix_binds_shift i π : prefix_binds (prefix_shift i π) = prefix_binds π.
+Proof. by destruct π. Qed.
 
-Lemma subst_shiftv k v P : (shiftv k P) ⁅ v // k ⁆ᵥ = P
-with gsubst_gshiftv k v g : gsubst k v (gshiftv k g) = g.
+Lemma subst_shiftv i v P : (shiftv i P) ⁅ v // i ⁆ᵥ = P
+with gsubst_gshiftv i v g : gsubst i v (gshiftv i g) = g.
 Proof.
   - destruct P; simpl; rewrite ?exp_subst_shift, ?subst_shiftv, ?gsubst_gshiftv; done.
   - destruct g; simpl; rewrite ?exps_subst_shift, ?prefix_subst_shift, ?prefix_binds_shift,
@@ -305,4 +305,4 @@ Proof. rewrite ren_comp. apply ren_ext. intros i. simpl. lia. Qed.
 Lemma ren_resn f n P : ren f (Ѵ n P) = Ѵ n (ren (liftn n f) P).
 Proof. revert f. induction n; intros f; simpl; [done|]. by rewrite IHn. Qed.
 
-End LqP.
+End De_Brujin_Lemmas.

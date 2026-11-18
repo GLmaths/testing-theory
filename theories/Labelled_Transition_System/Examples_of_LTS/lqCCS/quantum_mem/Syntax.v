@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,8 +19,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
+
 (* * lqCCS: an abstract model of quantum states
 
     The semantics of lqCCS (Ceragioli, Gadducci, Lomurno, Tedeschi,
@@ -39,7 +37,7 @@
       property of distributions, not of [St];
     - a trace [tr] into an ordered commutative monoid [W] of probabilities,
       for which superoperators are trace preserving and measurements
-      complete ([br m (λ _, one)] is [Σ_k ℳ_k]);
+      complete ([br m (λ _, one)] is [Σ_n ℳ_n]);
     - linearity in the state, which [StAlg] states in the operator only;
     - the qubits of a state ([Σ_ρ]) and partial traces, for typing and for
       the environment of a distribution (Definition 6.6);
@@ -50,16 +48,16 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import List.
 From stdpp Require Import base countable decidable list gmap.
-From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas.
+From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas.
 Notation "ℰ · ρ" := (app (act ℰ) ρ) (at level 41, right associativity) : lqccs_scope.
-Notation "ℳ ·[ k ] ρ" := (app (kraus ℳ k) ρ) (at level 41, right associativity, format "ℳ  ·[ k ]  ρ") : lqccs_scope.
+Notation "ℳ ·[ n ] ρ" := (app (kraus ℳ n) ρ) (at level 41, right associativity, format "ℳ  ·[ n ]  ρ") : lqccs_scope.
 
 #[local] Open Scope lqccs_scope.
 
 Class QuantumModel `{StAlg} := MkQuantumModel {
     (* Names of the syntax. *)
-    sop_act : unitary → list qubit → Act;
-    meas_of : meas → list qubit → Meas;
+    sop_act : unitary → list qubit → Act; (* Harmony Lemma *)
+    meas_of : meas → list qubit → Meas; (* Harmony Lemma *)
 
     (* States: a commutative monoid, acted upon linearly. *)
     St_eqdec :: EqDecision St;
@@ -90,18 +88,18 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
     snorm : St → St;
     (* Superoperators of the syntax are trace preserving. *)
     sop_tr U qs ρ : tr (sop_act U qs · ρ) = tr ρ;
-    (* Completeness of measurements, [Σ_k M_k† M_k = I], read on traces. *)
+    (* Completeness of measurements, [Σ_n M_n† M_n = I], read on traces. *)
     meas_tr M qs ρ : tr (app (br (meas_of M qs) (λ _, one)) ρ) = tr ρ;
     (* Initialisation of a qubit to [|0⟩], [Σ_i |0⟩⟨i| ρ |i⟩⟨0|], trace preserving. *)
-    init_act : qubit → Act;
+    init_act : qubit → Act; (* Harmony Lemma *)
     init_tr q ρ : tr (init_act q · ρ) = tr ρ;
 
     (* Qubits of a state, preserved by the operations of the syntax. *)
     St_qubits : St → gset qubit;
     sop_qubits U qs ρ : St_qubits (sop_act U qs · ρ) = St_qubits ρ;
     init_qubits q ρ : St_qubits (init_act q · ρ) = St_qubits ρ;
-    meas_qubits M qs k ρ :
-      St_qubits (meas_of M qs ·[k] ρ) = St_qubits ρ;
+    meas_qubits M qs n ρ :
+      St_qubits (meas_of M qs ·[n] ρ) = St_qubits ρ;
 
     (* Partial trace [tr_Σ'(ρ)]. *)
     ptrace : gset qubit → St → St;
@@ -111,12 +109,12 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
 
 Arguments W {_ _ _ _ _}.
 
-(* [U^q̃(ρ)] and the branch [k] of [M^q̃(ρ)], unnormalised: its trace is
-    the probability of outcome [k]. *)
+(* [U^q̃(ρ)] and the branch [n] of [M^q̃(ρ)], unnormalised: its trace is
+    the probability of outcome [n]. *)
 Definition sop_apply `{QuantumModel} U qs ρ := sop_act U qs · ρ.
 Definition init_apply `{QuantumModel} q ρ := init_act q · ρ.
 
-Notation "M ⦅ qs ⦆[ k ] · ρ" := (app (kraus (meas_of M qs) k) ρ) (at level 30, ρ at level 29, format "M  ⦅ qs ⦆[ k ]  ·  ρ") : lqccs_scope.
+Notation "M ⦅ qs ⦆[ n ] · ρ" := (app (kraus (meas_of M qs) n) ρ) (at level 30, ρ at level 29, format "M  ⦅ qs ⦆[ n ]  ·  ρ") : lqccs_scope.
 
 
 (* ** First consequences *)
@@ -148,13 +146,13 @@ Section Consequences.
   Qed.
 
   (* A measurement branch never weighs more than the state it comes from. *)
-  Lemma meas_branch_le M qs k ρ : In k (outs (meas_of M qs)) → W_le (tr (M ⦅qs⦆[k] · ρ)) (tr ρ).
+  Lemma meas_branch_le M qs n ρ : In n (outs (meas_of M qs)) → W_le (tr (M ⦅qs⦆[n] · ρ)) (tr ρ).
   Proof.
     intros Hk.
-    rewrite <- (meas_tr M qs ρ), br_sum. fold (sum (map (λ k, one ⋅ kraus (meas_of M qs) k)
+    rewrite <- (meas_tr M qs ρ), br_sum. fold (sum (map (λ n, one ⋅ kraus (meas_of M qs) n)
                                                  (outs (meas_of M qs)))).
     rewrite app_ssum, tr_ssum, !map_map.
-    apply le_fold_right, in_map_iff. exists k. split; [|exact Hk].
+    apply le_fold_right, in_map_iff. exists n. split; [|exact Hk].
     by rewrite comp_1l.
   Qed.
 
@@ -180,35 +178,33 @@ Section Consequences.
   Qed.
 
   (* A measurement of a non-zero state has an outcome of non-zero weight. *)
-  Lemma meas_nonzero_branch M qs ρ : ρ ≠ szero → ∃ k, k ∈ outs (meas_of M qs) ∧ M ⦅qs⦆[k] · ρ ≠ szero.
+  Lemma meas_nonzero_branch M qs ρ : ρ ≠ szero → ∃ n, n ∈ outs (meas_of M qs) ∧ M ⦅qs⦆[n] · ρ ≠ szero.
   Proof.
     intros Hρ.
-    destruct (decide (Exists (λ k, M ⦅qs⦆[k] · ρ ≠ szero) (outs (meas_of M qs))))
+    destruct (decide (Exists (λ n, M ⦅qs⦆[n] · ρ ≠ szero) (outs (meas_of M qs))))
       as [HE|HE].
-    - apply Exists_exists in HE as (k & Hin & Hk). eauto.
+    - apply Exists_exists in HE as (n & Hin & Hk). eauto.
     - exfalso. apply Hρ, tr_zero_inv.
-      rewrite <- (meas_tr M qs ρ), br_sum. fold (sum (map (λ k, one ⋅ kraus (meas_of M qs) k)
+      rewrite <- (meas_tr M qs ρ), br_sum. fold (sum (map (λ n, one ⋅ kraus (meas_of M qs) n)
                                                    (outs (meas_of M qs)))).
       rewrite app_ssum, tr_ssum, !map_map. apply fold_W_zero.
-      intros w (k & -> & Hk)%list_elem_of_fmap. rewrite comp_1l.
-      destruct (decide (M ⦅qs⦆[k] · ρ = szero)) as [Hz|Hz].
+      intros w (n & -> & Hk)%list_elem_of_fmap. rewrite comp_1l.
+      destruct (decide (M ⦅qs⦆[n] · ρ = szero)) as [Hz|Hz].
       + by rewrite Hz, tr_szero.
-      + exfalso. apply HE, Exists_exists. exists k. split; [done|done].
+      + exfalso. apply HE, Exists_exists. exists n. split; [done|done].
   Qed.
 
   (* The outcomes of a measurement that have a non-zero probability: a
       distribution is its support, as in a pLTS. *)
   Definition outs_nz (ℳ : Meas) (ρ : St) : list nat :=
-    filter (λ k, ℳ ·[k] ρ ≠ szero) (outs ℳ).
+    filter (λ n, ℳ ·[n] ρ ≠ szero) (outs ℳ).
 
-  Lemma outs_nz_spec ℳ ρ k : k ∈ outs_nz ℳ ρ ↔ k ∈ outs ℳ ∧ ℳ ·[k] ρ ≠ szero.
+  Lemma outs_nz_spec ℳ ρ n : n ∈ outs_nz ℳ ρ ↔ n ∈ outs ℳ ∧ ℳ ·[n] ρ ≠ szero.
   Proof. unfold outs_nz. rewrite list_elem_of_filter. tauto. Qed.
 
   Lemma outs_nz_nonempty M qs ρ : ρ ≠ szero → outs_nz (meas_of M qs) ρ ≠ [].
   Proof.
-    intros Hρ E. destruct (meas_nonzero_branch M qs ρ Hρ) as (k & Hk).
-    apply (outs_nz_spec (meas_of M qs) ρ k) in Hk. rewrite E in Hk. by apply elem_of_nil in Hk.
+    intros Hρ E. destruct (meas_nonzero_branch M qs ρ Hρ) as (n & Hk).
+    apply (outs_nz_spec (meas_of M qs) ρ n) in Hk. rewrite E in Hk. by apply elem_of_nil in Hk.
   Qed.
 End Consequences.
-
-(* end hide *)

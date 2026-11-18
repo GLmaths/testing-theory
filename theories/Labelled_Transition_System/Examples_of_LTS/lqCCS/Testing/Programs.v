@@ -33,20 +33,20 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list propset.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper.Tag_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
 (* ** Tags along the transitions *)
 
-Section LqP.
-  Context `{LP : lqCCS_Parameters}.
+Section Programs.
+  Context `{lqP : lqCCS_Parameters}.
 
-Lemma prog_step_tagged P s l P' x :
-  P ⟶ₚ{l}[s] P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
+Lemma prog_step_tagged P k 𝜆 P' x :
+  P ⟶ₚ{𝜆}[k] P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
 Proof.
-  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; simpl; intros Hx.
+  intros Hs. induction Hs as [g k 𝜆 P' Hg| | | | | | | | | ]; simpl; intros Hx.
   - induction Hg; simpl in *; try (apply elem_of_app; auto; fail).
     + by right.
     + rewrite (proj1 tren_subst), tagged_subst in Hx. by right.
@@ -66,7 +66,7 @@ Proof.
 Qed.
 
 (* The tags a program may come to have: those of the roots of its tags. *)
-Definition otags (P : proc) : propset tag := {[ t | tag_base t ∈ tags (tren tag_base P) ]}.
+Definition otags (P : prog) : propset tag := {[ t | tag_base t ∈ tags (tren tag_base P) ]}.
 
 Lemma tags_otags P t : t ∈ tags P → t ∈ otags P.
 Proof.
@@ -75,21 +75,21 @@ Proof.
   apply list_elem_of_fmap. by exists x.
 Qed.
 
-Lemma prog_step_otags P s l P' t : P ⟶ₚ{l}[s] P' → t ∈ otags P' → t ∈ otags P.
+Lemma prog_step_otags P k 𝜆 P' t : P ⟶ₚ{𝜆}[k] P' → t ∈ otags P' → t ∈ otags P.
 Proof.
   unfold otags, tags. intros Hs Ht. rewrite elem_of_PropSet in Ht |- *.
   apply list_elem_of_fmap in Ht as (x & E & Hx). apply list_elem_of_fmap. exists x. split; [done|].
   by eapply prog_step_tagged.
 Qed.
 
-Lemma choice_pair_elem u t t' : u ∈ ({[+ t; t' +]} : choice) → u = t ∨ u = t'.
+Lemma choice_pair_elem t t1 t2 : t ∈ ({[+ t1; t2 +]} : choice) → t = t1 ∨ t = t2.
 Proof. rewrite gmultiset_elem_of_disj_union, !gmultiset_elem_of_singleton. tauto. Qed.
 
 (* The tags of the choice of a step belong to the program. *)
-Lemma prog_step_choice_tags P s l P' u :
-  P ⟶ₚ{l}[s] P' → u ∈ s → u ∈ tags P.
+Lemma prog_step_choice_tags P k 𝜆 P' t :
+  P ⟶ₚ{𝜆}[k] P' → t ∈ k → t ∈ tags P.
 Proof.
-  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; unfold tags; simpl; intros Hu.
+  intros Hs. induction Hs as [g k 𝜆 P' Hg| | | | | | | | | ]; unfold tags; simpl; intros Hu.
   - induction Hg; simpl in *.
     all: try (apply gmultiset_elem_of_singleton in Hu; subst; by left).
     + rewrite map_app. apply elem_of_app. left. by apply IHHg.
@@ -109,6 +109,6 @@ Proof.
   - apply gmultiset_elem_of_singleton in Hu. subst. by left.
 Qed.
 
-End LqP.
+End Programs.
 
 (* end hide *)
