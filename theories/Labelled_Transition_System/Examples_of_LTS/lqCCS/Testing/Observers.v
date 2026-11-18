@@ -37,8 +37,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure.
-From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs.
+From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.lqCCS_prog.Congruence lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -52,16 +52,15 @@ Lemma cgr_step_successb :
   (∀ P Q, P ≡ Q → successb P = successb Q) ∧ (∀ g h, g ≡ᵍ h → gsuccessb g = gsuccessb h).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try done;
-    try (by rewrite orb_false_r); try apply orb_comm; try apply orb_assoc;
+    try (by rewrite orb_false_r); try apply orb_comm; try apply orb_assoc; try (symmetry; apply orb_assoc);
     try (by rewrite !successb_ren);
     try (match goal with Hx : _ = _ |- _ => by rewrite Hx end).
 Qed.
 
 Lemma cgr_successb P Q : P ≡* Q → successb P = successb Q.
 Proof.
-  induction 1 as [|P Q R [Hpq|Hqp] _ IH]; [done| |].
-  - rewrite <- IH. by apply cgr_step_successb.
-  - rewrite <- IH. symmetry. by apply cgr_step_successb.
+  induction 1 as [|P Q R Hpq _ IH]; [done|].
+  rewrite <- IH. by apply cgr_step_successb.
 Qed.
 
 Lemma cgr_success P Q : P ≡* Q → success P ↔ success Q.

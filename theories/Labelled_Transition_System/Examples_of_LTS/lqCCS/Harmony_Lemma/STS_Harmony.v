@@ -39,16 +39,16 @@
     transition of the program is a reduction ([Taus_Implies_Reduction]), and
     so is a quantum action answered by the memory
     ([Quantum_Implies_Reduction]); the converse
-    ([Reduction_Implies_Internal]) uses the bisimulation [cgr_bisim]. *)
+    ([Reduction_Implies_Internal]) uses [Congruence_Respects_Transition]. *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list sets relations.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas.
-From TestingTheory Require Import lqCCS.Language.Congruence lqCCS.Harmony_Lemma.Memory_Harmony.
+From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Congruence lqCCS.Harmony_Lemma.Memory_Harmony lqCCS.lqCCS_process.STS.STS.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope par_scope.
@@ -210,7 +210,6 @@ Proof.
     exists 𝜆, P1, K, R, (S n), Q1. split_and!; [by apply cgr_res|done|by apply cgr_res].
 Qed.
 
-Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩").
 
 Section STS.
   Context `{QM : QuantumModel}.
@@ -234,33 +233,6 @@ Section STS.
   Lemma comp_tau_sync ρ P s a P' b ρ' :
     P ⟶ₚ{ActExt a}[s] P' → ρ ⟶ₘ{b} ρ' → 𝔻ₘₑₘ b a → ρ ∣ P ⟶{τ}[s] ρ' ∣ P'.
   Proof. intros Hp Hm Hs. rewrite <- (left_id_L ∅ (⊎) s). eapply par_sync; [exact Hm | exact Hp | exact Hs]. Qed.
-
-  (* ** The reduction semantics *)
-
-  Inductive sts : St → proc → choice → St → proc → Prop :=
-  | sts_com ρ t c e v t' P K :
-      〚 e 〛 = v →
-      ⟨ρ, t ∶ c ! e ∥ ((t' ∶ c ? ∙ P) + K)⟩ ⟶[{[+ t; t' +]}] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆ᵥ⟩
-  | sts_tau ρ t P K :
-      ⟨ρ, ((t ∶ 𝛕 ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨ρ, P⟩
-  | sts_op ρ t U es qs P K :
-      eval_qubits es = Some qs →
-      ⟨ρ, ((t ∶ U ⦅es⦆ ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨sop_apply U qs ρ, P⟩
-  | sts_init ρ t e q P K :
-      eval_qubit e = Some q →
-      ⟨ρ, ((t ∶ e := |0⟩ ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨init_apply q ρ, P⟩
-  | sts_meas ρ t M es qs k P K :
-      eval_qubits es = Some qs → k ∈ outs (meas_of M qs) →
-      ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨M ⦅qs⦆[k] · ρ, P ⁅ VNat k ⁆ᵥ⟩
-  | sts_rec ρ t P :
-      ⟨ρ, t ∶ rec ∙ P⟩ ⟶[{[+ t +]}] ⟨ρ, P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ⟩
-  | sts_par ρ P s ρ' P' Q :
-      ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶[s] ⟨ρ', P' ∥ Q⟩
-  | sts_res ρ P s ρ' P' :
-      ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩ → ⟨ρ, ν P⟩ ⟶[s] ⟨ρ', ν P'⟩
-  | sts_cong ρ P P1 s ρ' Q1 Q :
-      P ≡* P1 → ⟨ρ, P1⟩ ⟶[s] ⟨ρ', Q1⟩ → Q1 ≡* Q → ⟨ρ, P⟩ ⟶[s] ⟨ρ', Q⟩
-  where "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') : lqccs_scope.
 
   Lemma sts_resn n ρ P s ρ' P' : ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩ → ⟨ρ, Ѵ n P⟩ ⟶[s] ⟨ρ', Ѵ n P'⟩.
   Proof. intros Hs. induction n; simpl; [done|]. by apply sts_res. Qed.
@@ -385,11 +357,11 @@ Section STS.
       + apply comp_tau_right. by apply pr_res.
       + eapply comp_tau_sync; [|exact Hm | exact Hd].
         apply pr_res. by rewrite (sync_lbl_ren _ _ Hd).
-    - assert (Hf : fwd P1 P) by (apply cgr_bisim; by symmetry).
-      destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)];
-        destruct (Hf _ _ _ Hp) as (Q' & Hp' & HQ'); exists Q'.
-      + split; [by apply comp_tau_right|]. etrans; [symmetry; exact HQ'|]. etrans; [exact HQ|exact Hcg'].
-      + split; [by eapply comp_tau_sync|]. etrans; [symmetry; exact HQ'|]. etrans; [exact HQ|exact Hcg'].
+    - destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)];
+        destruct (Congruence_Respects_Transition P _ _ _ (ex_intro _ P1 (conj Hcg Hp))) as (Q' & Hp' & HQ');
+        exists Q'.
+      + split; [by apply comp_tau_right|]. etrans; [exact HQ'|]. etrans; [exact HQ|exact Hcg'].
+      + split; [by eapply comp_tau_sync|]. etrans; [exact HQ'|]. etrans; [exact HQ|exact Hcg'].
   Qed.
 
   (* ** The Harmony lemma *)
@@ -411,13 +383,8 @@ Section STS.
   Qed.
 End STS.
 
-Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ↛[ s ] ⟨ ρ' , P' ⟩" := (¬ sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 
 End LqP.
 
-Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩").
-Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ↛[ s ] ⟨ ρ' , P' ⟩" := (¬ sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 
 (* end hide *)

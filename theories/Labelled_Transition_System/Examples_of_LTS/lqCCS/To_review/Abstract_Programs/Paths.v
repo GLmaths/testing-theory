@@ -30,7 +30,7 @@
     each once ([enum_spec], [enum_nodup]). *)
 
 From Stdlib Require Import List Arith Lia FinFun ChoiceFacts.
-From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.To_review.Abstract_Programs.Lifted.
+From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.To_review.Abstract_Programs.Lifted.
 Import ListNotations.
 Section Paths.
 Context `{FinAlg}.

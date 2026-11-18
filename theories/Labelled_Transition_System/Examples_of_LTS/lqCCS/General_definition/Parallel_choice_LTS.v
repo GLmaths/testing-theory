@@ -25,7 +25,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base gmultiset countable decidable numbers.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Language.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax.
 
 (* ** Choices [s ::= ε | t | {t, t'}] *)
 

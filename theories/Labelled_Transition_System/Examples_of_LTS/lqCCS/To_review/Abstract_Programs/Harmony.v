@@ -29,7 +29,7 @@
     which emits operations and receives outcomes, and a memory LTS. *)
 
 From Stdlib Require Import List.
-From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.To_review.Abstract_Programs.Lifted lqCCS.To_review.Abstract_Programs.Paths.
+From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.To_review.Abstract_Programs.Lifted lqCCS.To_review.Abstract_Programs.Paths.
 Import ListNotations.
 Section Harmony.
 Context `{StAlg}.

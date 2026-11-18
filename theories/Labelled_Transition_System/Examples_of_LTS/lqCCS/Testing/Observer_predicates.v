@@ -26,7 +26,7 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list numbers.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Testing.Scheduled.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Testing.Scheduled.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.

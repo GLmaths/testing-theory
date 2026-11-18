@@ -24,7 +24,7 @@ From Stdlib.Lists Require Import List.
 From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers.
-From TestingTheory Require Import lqCCS.Language.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.

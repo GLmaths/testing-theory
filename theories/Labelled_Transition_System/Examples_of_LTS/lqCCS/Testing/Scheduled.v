@@ -44,8 +44,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth.
-From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence lqCCS.Harmony_Lemma.Memory_Harmony.
+From TestingTheory Require Import lqCCS.quantum_mem.Algebra lqCCS.quantum_mem.Syntax lqCCS.quantum_mem.Quantum_Weights.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.lqCCS_prog.Congruence lqCCS.Harmony_Lemma.Memory_Harmony.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -103,20 +103,6 @@ Definition tau_free (T : proc) : Prop := tau_freeb T = true.
 
 Section Sched.
   Context `{QM : QuantumModel}.
-
-  (* The outcomes of a measurement that have a non-zero probability: a
-      distribution is its support, as in a pLTS. *)
-  Definition outs_nz (ℳ : Meas) (ρ : St) : list nat :=
-    filter (λ k, ℳ ·[k] ρ ≠ szero) (outs ℳ).
-
-  Lemma outs_nz_spec ℳ ρ k : k ∈ outs_nz ℳ ρ ↔ k ∈ outs ℳ ∧ ℳ ·[k] ρ ≠ szero.
-  Proof. unfold outs_nz. rewrite list_elem_of_filter. tauto. Qed.
-
-  Lemma outs_nz_nonempty M qs ρ : ρ ≠ szero → outs_nz (meas_of M qs) ρ ≠ [].
-  Proof.
-    intros Hρ E. destruct (meas_nonzero_branch M qs ρ Hρ) as (k & Hk).
-    apply (outs_nz_spec (meas_of M qs) ρ k) in Hk. rewrite E in Hk. by apply elem_of_nil in Hk.
-  Qed.
 
   (* ** The scheduled step of a tested program
 

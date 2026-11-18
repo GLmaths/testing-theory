@@ -34,9 +34,9 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Language.Algebra pMust_almost_sure lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Harmony_Lemma.Memory_Harmony.
-From TestingTheory Require Import lqCCS.Language.Congruence lqCCS.Harmony_Lemma.STS_Harmony.
+From TestingTheory Require Import lqCCS.quantum_mem.Algebra pMust_almost_sure lqCCS.quantum_mem.Syntax.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Harmony_Lemma.Memory_Harmony.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Congruence lqCCS.Harmony_Lemma.STS_Harmony.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
