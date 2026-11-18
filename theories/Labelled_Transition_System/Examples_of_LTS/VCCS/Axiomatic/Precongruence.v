@@ -917,7 +917,7 @@ Proof. intros gp gq q r μ s l w. eapply wt_act; [eapply lts_choiceR; exact l | 
     concrete [v] the interaction actually uses — so the direct
     [must_intensional]-induction technique (as for the output/τ prefixes) applies
     immediately, no acceptance-set detour needed. Confirms the earlier
-    correction to the plan: the single Coq binder in [c?p] doesn't make
+    correction to the plan: the single Rocq binder in [c?p] doesn't make
     this rule non-quantified "for free" (it's still genuinely
     [∀v]-indexed in the hypothesis), but it *does* mean no separate
     substitution-respects-⊑ lemma is needed beyond this. *)

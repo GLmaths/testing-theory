@@ -21,8 +21,8 @@
 
 (package
  (name testing-theory)
- (synopsis "Coq library for characterisations of testing preorders")
- (description "Coq library for characterisations of testing preorders")
+ (synopsis "Rocq library for characterisations of testing preorders")
+ (description "Rocq library for characterisations of testing preorders")
  (depends (rocq-prover (>= 9.0.0))
           (rocq-stdpp(>= 1.13.0))
           (rocq-coinduction (>= 1.21))

@@ -1,6 +1,6 @@
 # Theories directory
 
-This folder hosts the Coq developments for the must-testing project, including ACCS-style systems and the pi-calculus formalisation.
+This folder hosts the Rocq developments for the must-testing project, including ACCS-style systems and the pi-calculus formalisation.
 
 ## Pi calculus (overview)
 See [pi/README.md](pi/README.md) for the module structure.
@@ -15,7 +15,7 @@ See [pi/README.md](pi/README.md) for the module structure.
 
 ## Coq_Helpers
 
-Lemmas in Coq to help in proofs.
+Lemmas in Rocq to help in proofs.
 
 ## Generalization
 

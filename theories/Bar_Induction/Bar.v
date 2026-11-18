@@ -99,12 +99,12 @@ Section actual_bar_induction.
 
   (* We prove the principle of Bar induction using the classical axiom of
   Classical Epsilon to be sure that the Bar-induction principle we are using is
-  admissible wrt to Coq's logic. Classical expsilon states that if [∃ x, P x]
+  admissible wrt to Rocq's logic. Classical expsilon states that if [∃ x, P x]
   then we can choose a witness using a choice function [ϵ]. If [H] is a proof of
   [∃ x, P x], we know that [P (ϵ H)].
 
   It implies excluded middle, since [A ∨ ¬ A] is equivalent to [∃ (b:bool), if b
-  then A else ¬ A]. Hence the Coq standard library reexports [classical] from
+  then A else ¬ A]. Hence the Rocq standard library reexports [classical] from
   [ClassicalEpsilon], hence there are two axioms used in the theorem below:
   constructive_indefinite_description and classical
    *)

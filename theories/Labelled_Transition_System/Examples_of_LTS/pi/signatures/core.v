@@ -16,7 +16,7 @@ Qed.
 Exemplary functor instances needed to make Autosubst's generation possible for functors.
 Two things are important:
 1. The names are fixed.
-2. For Coq to check termination, also the proofs have to be closed with Defined.
+2. For Rocq to check termination, also the proofs have to be closed with Defined.
  *)
 
 (* *** List Instance *)

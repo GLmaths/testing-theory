@@ -600,7 +600,7 @@ Proof. intros c d y. apply msg_not_Bad. Qed.
 
     [bk_kill] carried the same universal clause, and had to be weakened
     the same way — but not to an [exists]: [BadK_sound] inducts on the
-    **judgement**, and Coq generates no induction hypothesis for a
+    **judgement**, and Rocq generates no induction hypothesis for a
     recursive occurrence under an [exists].  The clause therefore names
     the choice by a **function** [f : ValueData -> proc], so the
     recursive occurrence sits under an ordinary [forall].  Nothing
