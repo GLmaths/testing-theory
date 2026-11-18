@@ -13,13 +13,13 @@ See [pi/README.md](pi/README.md) for the module structure.
 
 ## Bar_Induction
 
-## Coq_Helpers
+## Rocq_Helpers
 
 Lemmas in Rocq to help in proofs.
 
 ## Generalization
 
-Lemmas and Instances that say the current development is a generalization of the work done in COQ of "Constructive characterisations of the must-preorder for asynchrony", 2025, Giovanni Bernardi, Ilaria Castellani, Paul Laforgue, Léo Stefanesco.
+Lemmas and Instances that say the current development is a generalization of the work done in Rocq of "Constructive characterisations of the must-preorder for asynchrony", 2025, Giovanni Bernardi, Ilaria Castellani, Paul Laforgue, Léo Stefanesco.
 
 ## Interaction_Between_Lts
 
