@@ -29,7 +29,7 @@ From stdpp Require Import base gmultiset countable decidable list sets relations
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.General_definition.Algebra lqCCS.quantum_mem.Syntax.
 From TestingTheory Require Import lqCCS.lqCCS_prog.Syntax lqCCS.Helper.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.quantum_mem.LTS lqCCS.lqCCS_prog.LTS lqCCS.lqCCS_par_Qmem.LTS lqCCS.lqCCS_process.LTS.LTS lqCCS.Helper.Conf_labels lqCCS.Helper.Label_lemmas.
-From TestingTheory Require Import lqCCS.lqCCS_prog.Congruence lqCCS.lqCCS_process.STS.STS.
+From TestingTheory Require Import lqCCS.lqCCS_prog.Congruence lqCCS.lqCCS_process.STS.STS lqCCS.quantum_mem.Congruence lqCCS.lqCCS_process.Congruence.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope par_scope.
@@ -311,9 +311,11 @@ Section STS.
   (* ** From the STS to the LTS *)
 
   Lemma Reduction_Implies_Internal ρ P k ρ' Q :
-    ⟨ρ, P⟩ ⟶[k] ⟨ρ', Q⟩ → ∃ Q', ρ ∣ P ⟶{τ}[k] ρ' ∣ Q' ∧ Q' ≡* Q.
+    ⟨ρ, P⟩ ⟶[k] ⟨ρ', Q⟩ → ∃ ρ'' Q', ρ ∣ P ⟶{τ}[k] ρ'' ∣ Q' ∧ ⟨ρ'', Q'⟩ ≡* ⟨ρ', Q⟩.
   Proof.
-    induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t U es qs P K Hq | ρ t e q P K Hq
+    intros Hs. enough (∃ Q', ρ ∣ P ⟶{τ}[k] ρ' ∣ Q' ∧ Q' ≡* Q) as (Q' & Hc & HQ)
+      by (exists ρ', Q'; split; [exact Hc|split; [reflexivity|exact HQ]]).
+    revert Hs. induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t U es qs P K Hq | ρ t e q P K Hq
                    | ρ t M es qs n P K Hq Hk | ρ t P
                    | ρ P k ρ' P' Q _ (P'' & Hc & HP)
                    | ρ P k ρ' P' _ (P'' & Hc & HP)
@@ -348,11 +350,12 @@ Section STS.
   (* ** The Harmony lemma *)
 
   Theorem STS_Harmony ρ P k ρ' Q :
-    ⟨ρ, P⟩ ⟶[k] ⟨ρ', Q⟩ ↔ ∃ Q', ρ ∣ P ⟶{τ}[k] ρ' ∣ Q' ∧ Q' ≡* Q.
+    ⟨ρ, P⟩ ⟶[k] ⟨ρ', Q⟩ ↔ ∃ ρ'' Q', ρ ∣ P ⟶{τ}[k] ρ'' ∣ Q' ∧ ⟨ρ'', Q'⟩ ≡* ⟨ρ', Q⟩.
   Proof.
-    split; [apply Reduction_Implies_Internal|].
-    intros (Q' & Hc & HQ).
-    eapply sts_cong; [reflexivity | by apply Internal_Implies_Reduction | exact HQ].
+    split.
+    - apply Reduction_Implies_Internal.
+    - intros (ρ'' & Q' & Hc & [Hm HQ]). simpl in *. unfold mem_cgr in Hm. subst ρ''.
+      eapply sts_cong; [reflexivity | by apply Internal_Implies_Reduction | exact HQ].
   Qed.
 
   (* The same statement on the LTS given directly on the configurations. *)
@@ -360,6 +363,3 @@ End STS.
 
 
 End STS_Harmony.
-
-
-(* end hide *)

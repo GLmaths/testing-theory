@@ -72,9 +72,8 @@ Theorem harmony ρ P k ρ' Q :
   ⟨ρ, P⟩ ⟶[k] ⟨ρ', Q⟩ ↔ (ρ, P) ⟶{τ}[k] . ⋍ (ρ', Q).
 Proof.
   rewrite STS_Harmony. split.
-  - intros (Q' & Hc & HQ). exists (ρ', Q'). split; [by apply pre_harmony|]. split; [done|exact HQ].
-  - intros ([ρ1 Q'] & Hc & [Hm HQ]). simpl in *. unfold mem_cgr in Hm. subst ρ1.
-    exists Q'. split; [by apply pre_harmony|exact HQ].
+  - intros (ρ'' & Q' & Hc & HQ). exists (ρ'', Q'). split; [by apply pre_harmony|exact HQ].
+  - intros ([ρ'' Q'] & Hc & HQ). exists ρ'', Q'. split; [by apply pre_harmony|exact HQ].
 Qed.
 
 End Harmony.
